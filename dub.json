@@ -1,0 +1,9 @@
+{
+	"name": "commandr",
+	"authors": [
+		"Robert Pasiński"
+	],
+	"description": "Command Line Arguments parser for modern age",
+	"copyright": "Copyright © 2019, Robert Pasiński",
+	"license": "MIT"
+}
