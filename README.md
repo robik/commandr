@@ -24,11 +24,11 @@ void main(string[] args) {
 	    p = new Program("test", "1.0")
             .summary("Command line parser")
             .author("John Doe <me@foo.bar.com>")
-            .add(Flag("v", null, "turns on more verbose output")
+            .add(new Flag("v", null, "turns on more verbose output")
                 .name("verbose")
                 .repeating)
-            .add(Option(null, "test", "some teeeest"))
-            .add(Argument("path", "Path to file to edit")
+            .add(new Option(null, "test", "some teeeest"))
+            .add(new Argument("path", "Path to file to edit")
                 .required)
             ;
 
@@ -98,10 +98,10 @@ Add this entry to your `dub.json` file:
 
 ## Limitations
 
-TODO: Automatic BASH completion script
-TODO: Combined options `-qLop` (makes `-option` behind switch)
 TODO: validations
 TODO: enum/value sets
+TODO: Automatic BASH completion script
+TODO: Combined options `-qLop` (makes `-option` behind switch)
 TODO: conflicts
 TODO: allocator support
 TODO: With negative value (`no-` prefix)
@@ -111,3 +111,4 @@ TODO: help output grouping
 TODO: better help configuration and output
 TODO: strict
 TODO: more help customisable sections
+TODO: better print of subcommands (parent required options and args)

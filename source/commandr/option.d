@@ -114,7 +114,7 @@ mixin template BaseOption() {
 }
 
 
-struct Flag {
+class Flag {
     mixin BaseArgument;
     mixin BaseOption;
     mixin Triggerable!();
@@ -133,7 +133,7 @@ struct Flag {
     }
 }
 
-struct Option {
+class Option {
     mixin BaseArgument;
     mixin BaseOption;
     mixin Requireable;
@@ -165,9 +165,14 @@ struct Option {
     }
 }
 
-struct Argument {
+class Argument {
     mixin BaseArgument;
     mixin Requireable;
     mixin Triggerable!string;
     mixin Defaultable!string;
+
+    this(string name, string description = null) {
+        this._name = name;
+        this._description = description;
+    }
 }

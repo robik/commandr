@@ -22,7 +22,7 @@ class Command {
         this._name = name;
         this._summary = summary;
         this._version = version_;
-        this.add(Flag("h", "help", "prints help"));
+        this.add(new Flag("h", "help", "prints help"));
     }
 
     /**
@@ -239,7 +239,7 @@ class Command {
     }
 
     private void addBasicOptions() {
-        this.add(Flag(null, "version", "prints version"));
+        this.add(new Flag(null, "version", "prints version"));
     }
 }
 
@@ -373,22 +373,22 @@ unittest {
     // flag-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc").name("nnn"))
-            .add(Flag("b", "bbb", "desc").name("nnn"))
+            .add(new Flag("a", "aaa", "desc").name("nnn"))
+            .add(new Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc").name("nnn"))
-            .add(Option("b", "bbb", "desc").name("nnn"))
+            .add(new Flag("a", "aaa", "desc").name("nnn"))
+            .add(new Option("b", "bbb", "desc").name("nnn"))
     );
 
     // flag-argument
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc").name("nnn"))
-            .add(Argument("nnn"))
+            .add(new Flag("a", "aaa", "desc").name("nnn"))
+            .add(new Argument("nnn"))
     );
 
 
@@ -396,22 +396,22 @@ unittest {
     // option-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc").name("nnn"))
-            .add(Flag("b", "bbb", "desc").name("nnn"))
+            .add(new Option("a", "aaa", "desc").name("nnn"))
+            .add(new Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc").name("nnn"))
-            .add(Option("b", "bbb", "desc").name("nnn"))
+            .add(new Option("a", "aaa", "desc").name("nnn"))
+            .add(new Option("b", "bbb", "desc").name("nnn"))
     );
 
     // option-argument
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc").name("nnn"))
-            .add(Argument("nnn"))
+            .add(new Option("a", "aaa", "desc").name("nnn"))
+            .add(new Argument("nnn"))
     );
 
 
@@ -419,22 +419,22 @@ unittest {
     // argument-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("nnn"))
-            .add(Flag("b", "bbb", "desc").name("nnn"))
+            .add(new Argument("nnn"))
+            .add(new Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // argument-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("nnn"))
-            .add(Option("b", "bbb", "desc").name("nnn"))
+            .add(new Argument("nnn"))
+            .add(new Option("b", "bbb", "desc").name("nnn"))
     );
 
     // argument-argument
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("nnn"))
-            .add(Argument("nnn"))
+            .add(new Argument("nnn"))
+            .add(new Argument("nnn"))
     );
 }
 
@@ -446,30 +446,30 @@ unittest {
     // flag-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc"))
-            .add(Flag("a", "bbb", "desc"))
+            .add(new Flag("a", "aaa", "desc"))
+            .add(new Flag("a", "bbb", "desc"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc"))
-            .add(Option("a", "bbb", "desc"))
+            .add(new Flag("a", "aaa", "desc"))
+            .add(new Option("a", "bbb", "desc"))
     );
 
     // FLAGS
     // option-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc"))
-            .add(Flag("a", "bbb", "desc"))
+            .add(new Option("a", "aaa", "desc"))
+            .add(new Flag("a", "bbb", "desc"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc"))
-            .add(Option("a", "bbb", "desc"))
+            .add(new Option("a", "aaa", "desc"))
+            .add(new Option("a", "bbb", "desc"))
     );
 }
 
@@ -481,30 +481,30 @@ unittest {
     // flag-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc"))
-            .add(Flag("b", "aaa", "desc"))
+            .add(new Flag("a", "aaa", "desc"))
+            .add(new Flag("b", "aaa", "desc"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Flag("a", "aaa", "desc"))
-            .add(Option("b", "aaa", "desc"))
+            .add(new Flag("a", "aaa", "desc"))
+            .add(new Option("b", "aaa", "desc"))
     );
 
     // FLAGS
     // option-flag
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc"))
-            .add(Flag("b", "aaa", "desc"))
+            .add(new Option("a", "aaa", "desc"))
+            .add(new Flag("b", "aaa", "desc"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("a", "aaa", "desc"))
-            .add(Option("b", "aaa", "desc"))
+            .add(new Option("a", "aaa", "desc"))
+            .add(new Option("b", "aaa", "desc"))
     );
 }
 
@@ -514,8 +514,8 @@ unittest {
     // repating
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("file", "path").repeating)
-            .add(Argument("dir", "desc"))
+            .add(new Argument("file", "path").repeating)
+            .add(new Argument("dir", "desc"))
     );
 }
 
@@ -525,8 +525,8 @@ unittest {
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("file", "path"))
-            .add(Argument("dir", "desc").required)
+            .add(new Argument("file", "path"))
+            .add(new Argument("dir", "desc").required)
     );
 }
 
@@ -536,11 +536,11 @@ unittest {
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Option("d", "dir", "desc").required.defaultValue("test"))
+            .add(new Option("d", "dir", "desc").required.defaultValue("test"))
     );
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(Argument("dir", "desc").required.defaultValue("test"))
+            .add(new Argument("dir", "desc").required.defaultValue("test"))
     );
 }
