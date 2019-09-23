@@ -27,32 +27,32 @@ unittest {
     assert(wrapped.get() == "test");
 }
 
-Nullable!Argument getArgumentByName(Program program, string name) nothrow pure {
-    return program.arguments.find!(o => o.name == name).wrapIntoNullable;
+Nullable!Argument getArgumentByName(T)(T aggregate, string name) nothrow pure {
+    return aggregate.arguments.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByName(Program program, string name) nothrow pure {
-    return program.options.find!(o => o.name == name).wrapIntoNullable;
+Nullable!Option getOptionByName(T)(T aggregate, string name) nothrow pure {
+    return aggregate.options.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByName(Program program, string name) nothrow pure {
-    return program.flags.find!(o => o.name == name).wrapIntoNullable;
+Nullable!Flag getFlagByName(T)(T aggregate, string name) nothrow pure {
+    return aggregate.flags.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByFull(Program program, string name) nothrow pure {
-    return program.options.find!(o => o.full == name).wrapIntoNullable;
+Nullable!Option getOptionByFull(T)(T aggregate, string name) nothrow pure {
+    return aggregate.options.find!(o => o.full == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByFull(Program program, string name) nothrow pure {
-    return program.flags.find!(o => o.full == name).wrapIntoNullable;
+Nullable!Flag getFlagByFull(T)(T aggregate, string name) nothrow pure {
+    return aggregate.flags.find!(o => o.full == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByShort(Program program, string name) nothrow pure {
-    return program.options.find!(o => o.abbrev == name).wrapIntoNullable;
+Nullable!Option getOptionByShort(T)(T aggregate, string name) nothrow pure {
+    return aggregate.options.find!(o => o.abbrev == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByShort(Program program, string name) nothrow pure {
-    return program.flags.find!(o => o.abbrev == name).wrapIntoNullable;
+Nullable!Flag getFlagByShort(T)(T aggregate, string name) nothrow pure {
+    return aggregate.flags.find!(o => o.abbrev == name).wrapIntoNullable;
 }
 
 class InvalidProgramException: Exception {

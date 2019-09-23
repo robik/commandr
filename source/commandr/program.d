@@ -3,28 +3,28 @@ module commandr.program;
 import commandr.option;
 import commandr.utils;
 import std.algorithm : all;
-import std.string : format;
 import std.ascii : isAlphaNum;
+import std.string : format;
 
 
-struct Program {
+private mixin template OptionAggregate() {
     private string _name;
     private string _version;
-    private string _binaryName;
     private string _summary;
-    private string[] _authors;
     private Flag[] _flags;
     private Option[] _options;
     private Argument[] _arguments;
-    // todo: consuming
-    // todo: strict
-    // todo: required
+    private Command[string] _commands;
+    private Program* _root;
+    private string[] _chain;
 
 
-    public this(string name, string version_ = "1.0") {
+    public this(string name, string summary = "", string version_ = "1.0") {
         this._name = name;
+        this._summary = summary;
         this._version = version_;
-        this.addBasicOptions();
+        this.add(Flag("h", "help", "prints help"));
+        this._chain = [_name];
     }
 
     /**
@@ -58,21 +58,6 @@ struct Program {
     }
 
     /**
-     * Sets program binary name
-     */
-    public typeof(this) binaryName(string binaryName) nothrow pure {
-        this._binaryName = binaryName;
-        return this;
-    }
-
-    /**
-     * Program binary name
-     */
-    public string binaryName() nothrow pure {
-        return (this._binaryName !is null) ? this._binaryName : this._name;
-    }
-
-    /**
      * Sets program summary (one-liner)
      */
     public typeof(this) summary(string summary) nothrow pure {
@@ -87,29 +72,6 @@ struct Program {
         return this._summary;
     }
 
-
-    /**
-     * Adds program author
-     */
-    public typeof(this) author(string author) nothrow pure {
-        this._authors ~= author;
-        return this;
-    }
-
-    /**
-     * Sets program authors
-     */
-    public typeof(this) authors(string[] authors) nothrow pure {
-        this._authors = authors;
-        return this;
-    }
-
-    /**
-     * Program authors
-     */
-    public string[] authors() nothrow pure {
-        return this._authors;
-    }
 
     /**
      * Adds option
@@ -181,6 +143,22 @@ struct Program {
         return this._arguments;
     }
 
+    public typeof(this) add(Command command) {
+        if (command.name in this._commands) {
+            throw new InvalidProgramException("duplicate command %s".format(command.name));
+        }
+
+        command._root = this._root;
+        command._chain = this._chain ~ command._chain;
+        _commands[command.name] = command;
+
+        return this;
+    }
+
+    public Command[string] commands() nothrow pure {
+        return this._commands;
+    }
+
     private void validateName(string name) {
         if (!name) {
             throw new InvalidProgramException("name cannot be empty");
@@ -193,21 +171,21 @@ struct Program {
         auto flag = this.getFlagByName(name);
         if (!flag.isNull) {
             throw new InvalidProgramException(
-                "Duplicate name %s which is already used by a flag".format(name)
+                "duplicate name %s which is already used by a flag".format(name)
             );
         }
 
         auto option = this.getOptionByName(name);
         if (!option.isNull) {
             throw new InvalidProgramException(
-                "Duplicate name %s which is already used by an option".format(name)
+                "duplicate name %s which is already used by an option".format(name)
             );
         }
 
         auto arg = this.getArgumentByName(name);
         if (!arg.isNull) {
             throw new InvalidProgramException(
-                "Duplicate name %s which is already used by an argument".format(name)
+                "duplicate name %s which is already used by an argument".format(name)
             );
         }
     }
@@ -220,14 +198,14 @@ struct Program {
         auto flag = this.getFlagByShort(abbrev);
         if (!flag.isNull) {
             throw new InvalidProgramException(
-                "Duplicate abbrevation -%s, flag %s already uses it".format(abbrev, flag.get().name)
+                "duplicate abbrevation -%s, flag %s already uses it".format(abbrev, flag.get().name)
             );
         }
 
         auto option = this.getOptionByShort(abbrev);
         if (!option.isNull) {
             throw new InvalidProgramException(
-                "Duplicate abbrevation -%s, option %s already uses it".format(abbrev, option.get().name)
+                "duplicate abbrevation -%s, option %s already uses it".format(abbrev, option.get().name)
             );
         }
     }
@@ -240,21 +218,81 @@ struct Program {
         auto flag = this.getFlagByFull(full);
         if (!flag.isNull) {
             throw new InvalidProgramException(
-                "Duplicate -%s, flag %s with this already exists".format(full, flag.get().name)
+                "duplicate -%s, flag %s with this already exists".format(full, flag.get().name)
             );
         }
 
         auto option = this.getOptionByFull(full);
         if (!option.isNull) {
             throw new InvalidProgramException(
-                "Duplicate --%s, option %s with this already exists".format(full, option.get().name)
+                "duplicate --%s, option %s with this already exists".format(full, option.get().name)
             );
         }
     }
 
+    public string[] chain() {
+        return this._chain;
+    }
+
     private void addBasicOptions() {
-        this.add(Flag("h", "help", "prints help"));
         this.add(Flag(null, "version", "prints version"));
+    }
+}
+
+struct Command {
+    mixin OptionAggregate;
+}
+
+struct Program {
+    mixin OptionAggregate;
+    private string _binaryName;
+    private string[] _authors;
+
+
+    public this(string name, string version_ = "1.0") {
+        this._name = name;
+        this._version = version_;
+        this._root = &this;
+        this.addBasicOptions();
+    }
+
+    /**
+     * Sets program binary name
+     */
+    public typeof(this) binaryName(string binaryName) nothrow pure {
+        this._binaryName = binaryName;
+        this._chain = [binaryName];
+        return this;
+    }
+
+    /**
+     * Program binary name
+     */
+    public string binaryName() nothrow pure {
+        return (this._binaryName !is null) ? this._binaryName : this._name;
+    }
+
+    /**
+     * Adds program author
+     */
+    public typeof(this) author(string author) nothrow pure {
+        this._authors ~= author;
+        return this;
+    }
+
+    /**
+     * Sets program authors
+     */
+    public typeof(this) authors(string[] authors) nothrow pure {
+        this._authors = authors;
+        return this;
+    }
+
+    /**
+     * Program authors
+     */
+    public string[] authors() nothrow pure {
+        return this._authors;
     }
 }
 

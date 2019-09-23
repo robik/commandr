@@ -12,13 +12,25 @@ void main(string[] args) {
                 .name("verbose")
                 .repeating)
             .add(Option(null, "test", "some teeeest"))
-            .add(Argument("path", "Path to file to edit")
-                .required)
-            ;
+            .add(Command("help", "prints help"))
+            .add(Command("dummy", "prints dummy text")
+                .add(Flag("l", "loud", ""))
+            )
+            .add(Command("branch", "branch managament")
+                .add(Command("add", "adds branch"))
+                .add(Command("rm", "removes branch"))
+            );
 
         auto a = p.parse(args);
-        writeln("verbosity level", a.occurencesOf("verbose"));
-        writeln("arg: ", a.arg("path"));
+        a.on("dummy", (args) {
+            writefln("DUMMY command. verbose: %s, loud: %s on path %s", args.flag("verbose"), args.flag("loud"), a.arg("path"));
+        }).on("branch", (args) {
+            args.on("add", (args) {
+                writeln("adding branch");
+            }).on("rm", (args) {
+                writeln("removing branch");
+            });
+        });
     } catch(InvalidProgramException e) {
         writeln("Whoops, program declaration is wrong: ", e.msg);
     } catch(InvalidArgumentsException e) {

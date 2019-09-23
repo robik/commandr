@@ -6,23 +6,25 @@ import std.algorithm : filter, map;
 import std.array : join;
 import std.stdio : writefln, writeln, write;
 import std.string : format;
-import std.range : chain;
+import std.range : chain, empty;
 
 
 struct HelpOutput {
     bool colors;
 }
 
-void printHelp(Program program) {
-    writefln("%s: %s \033[2m(%s)\033[0m", program.name, program.summary, program.version_);
-    writeln();
+void printHelp(T)(T program) {
+    static if (is(T == Program)) {
+        writefln("%s: %s \033[2m(%s)\033[0m", program.name, program.summary, program.version_);
+        writeln();
+    }
 
     writeln("\033[1mUSAGE\033[0m");
     write("  $ "); // prefix for usage
     program.printUsage();
     writeln();
 
-    if (program.flags.length > 0) {
+    if (!program.flags.empty) {
         writeln("\033[1mFLAGS\033[0m");
         foreach(flag; program.flags) {
             flag.printHelp();
@@ -30,7 +32,7 @@ void printHelp(Program program) {
         writeln();
     }
 
-    if (program.options.length > 0) {
+    if (!program.options.empty) {
         writeln("\033[1mOPTIONS\033[0m");
         foreach(option; program.options) {
             option.printHelp();
@@ -38,10 +40,18 @@ void printHelp(Program program) {
         writeln();
     }
 
-    if (program.arguments.length > 0) {
+    if (!program.arguments.empty) {
         writeln("\033[1mARGUMENTS\033[0m");
         foreach(arg; program.arguments) {
             arg.printHelp();
+        }
+        writeln();
+    }
+
+    if (!program.commands.empty) {
+        writeln("\033[1mSUB-COMMANDS\033[0m");
+        foreach(key, command; program.commands) {
+            writefln("  %-16s %s", key, command.summary);
         }
         writeln();
     }
@@ -55,7 +65,37 @@ void printUsage(Program program) {
             program.options.map!(o => optionUsage(o))
         ).join(" ");
     }
-    writefln("%s %s %s", program.binaryName, optionsUsage, program.arguments.map!(argUsage).join(" "));
+
+    string commands = program.commands.empty ? "" : (
+        "<%s>".format(program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|"))
+    );
+    writefln("%s %s %s %s", 
+        program.binaryName, 
+        optionsUsage, 
+        program.arguments.map!(argUsage).join(" "),
+        commands
+    );
+}
+
+void printUsage(Command command) {
+    string optionsUsage = "[options]";    
+    if (command.options.length + command.flags.length <= 8) {
+        optionsUsage = chain(
+            command.flags.map!(o => optionUsage(o)),
+            command.options.map!(o => optionUsage(o))
+        ).join(" ");
+    }
+
+    string commands = command.commands.empty ? "" : (
+        "<%s>".format(command.commands.length > 6 ? "COMMAND" : command.commands.keys.join("|"))
+    );
+    writefln("%s %s %s %s %s", 
+        command.chain.join(" "), 
+        command.name,
+        optionsUsage, 
+        command.arguments.map!(argUsage).join(" "),
+        commands
+    );
 }
 
 private void printHelp(Flag flag) {
@@ -107,6 +147,9 @@ private string optionUsage(T)(T o) {
         if (!o.isRequired) {
             result = "[%s]".format(result);
         }
+    }
+    else {
+        result = "[%s]".format(result);
     }
     return result;
 }

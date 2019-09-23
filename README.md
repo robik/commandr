@@ -75,6 +75,12 @@ Add this entry to your `dub.json` file:
    - Default values can be specified.
    - Repeated options are supported (only last argument)
 
+ - **Commands** (git-style)
+   - Infinitely recursive
+   - Contains own set of flags/options and arguments
+   - Dedicated help output
+   - Comfortable command handling with `ProgramArgs.on`
+
  - **Automated help generation**
    - Can be configured/partially overriden to suit your needs, such as forced disabling of ANSI codes.
    - Provided usage, help and version information.
@@ -92,7 +98,6 @@ Add this entry to your `dub.json` file:
 
 ## Limitations
 
-TODO: commands
 TODO: Automatic BASH completion script
 TODO: Combined options `-qLop`
 TODO: validations
@@ -103,3 +108,4 @@ TODO: hinting (for completion)
 TODO: suggestions
 TODO: help output grouping
 TODO: better help configuration and output
+TODO: strict

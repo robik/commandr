@@ -3,12 +3,13 @@ module commandr.parser;
 import commandr.program;
 import commandr.option;
 import commandr.args;
+import commandr.help;
 import commandr.utils;
 
 import std.algorithm : canFind, count, each;
 import std.stdio : writeln, writefln;
 import std.string : startsWith, indexOf, format;
-import std.range : iota;
+import std.range : iota, empty;
 import std.typecons : Tuple;
 
 
@@ -40,12 +41,17 @@ private RawOption parseRawOption(string argument) {
     return result;
 }
 
+ProgramArgs parse(T)(T program, ref string[] args) {
+    return program.parse(args, new ProgramArgs());
+}
 
-ProgramArgs parse(Program program, ref string[] args) {
-    ProgramArgs result;
+ProgramArgs parse(T)(T program, ref string[] args, ProgramArgs init) {
+    ProgramArgs result = init;
+    result.name = program.name;
+
     size_t argIndex = 0;
-
-    for (int i = 1; i < args.length; ++i) {
+    int i;
+    for (i = 1; i < args.length; ++i) {
         string arg = args[i];
         bool hasNext = i + 1 < args.length;
 
@@ -114,7 +120,7 @@ ProgramArgs parse(Program program, ref string[] args) {
         // argument
         else {
             if (argIndex >= program.arguments.length) {
-                throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(arg));
+                break;
             }
 
             Argument argument = program.arguments[argIndex];
@@ -125,6 +131,9 @@ ProgramArgs parse(Program program, ref string[] args) {
             argument.dispatchTriggers(arg);
         }
     }
+
+    // shift arguments
+    args = args[i..$];
 
     // fill defaults (before required)
     foreach(option; program.options) {
@@ -139,6 +148,12 @@ ProgramArgs parse(Program program, ref string[] args) {
         }
     }
 
+    if (result.flag("help")) {
+        program.printHelp();
+        import core.stdc.stdlib;
+        exit(0);
+    }
+
     // check required opts & illegal repetitions
     foreach(option; program.options) {
         if (option.isRequired && result.option(option.name) is null) {
@@ -151,9 +166,29 @@ ProgramArgs parse(Program program, ref string[] args) {
     }
     
     // check required args & illegal repetitions
-    size_t requiredArgs = program.arguments.count!(a => a.isRequired);    
-    if (argIndex < requiredArgs) {
-        throw new InvalidArgumentsException("missing required parameter %s".format(program.arguments[argIndex].name));
+    foreach(arg; program.arguments) {
+        if (arg.isRequired && result.arg(arg.name) is null) {
+            throw new InvalidArgumentsException("missing required argument %s".format(arg.name));
+        }
+    }
+
+    if (args.empty) {
+        if (!program.commands.empty) {
+            throw new InvalidArgumentsException("missing required subcommand");
+        }
+    }
+    else {
+        if (program.commands.empty) {
+            throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(args[0]));
+        }
+        else {
+            if ((args[0] in program.commands) is null) {
+                throw new InvalidArgumentsException("invalid command %s".format(args[0]));
+            }
+
+            result._command = program.commands[args[0]].parse(args, result.copy());
+            result._command._parent = result;
+        }
     }
 
     return result;

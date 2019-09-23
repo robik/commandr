@@ -1,18 +1,31 @@
 module commandr.args;
 
-import std.variant : Algebraic;
 import commandr.program;
+import std.variant : Algebraic;
+import std.typecons : Nullable;
 
 
-struct ProgramArgs {
+class ProgramArgs {
+    public string name;
+
     package {
         int[string] _flags;
         string[][string] _options;
         string[][string] _args;
+        ProgramArgs _parent;
+        ProgramArgs _command;
+    }
+
+    package ProgramArgs copy() {
+        ProgramArgs a = new ProgramArgs();
+        a._flags = _flags.dup;
+        a._options = _options.dup;
+        a._args = _args.dup;
+        return a;
     }
 
     public bool hasFlag(string name) {
-        return (name in _flags) != null && _flags[name] > 0;
+        return ((name in _flags) != null && _flags[name] > 0);
     }
     public alias flag = hasFlag;
 
@@ -55,7 +68,7 @@ struct ProgramArgs {
         if ((*entryPtr).length == 0) {
             return defaultValue;
         }
-        
+
         return (*entryPtr)[0];
     }
 
@@ -67,4 +80,20 @@ struct ProgramArgs {
         return *entryPtr;
     }
     alias args = argAll;
+
+    public ProgramArgs command() {
+        return _command;
+    }
+
+    public ProgramArgs parent() {
+        return _parent;
+    }
+
+    public typeof(this) on(string command, scope void delegate(ProgramArgs args) handler) {
+        if (_command !is null && _command.name == command) {
+            handler(_command);
+        }
+
+        return this;
+    }
 }
