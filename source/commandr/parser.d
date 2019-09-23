@@ -19,7 +19,10 @@ class InvalidArgumentsException: Exception {
     }
 }
 
+
+/// internal type for holding name-value pair
 private alias RawOption = Tuple!(string, "name", string, "value");
+
 
 /**
  * Splits --option=value into a pair of strings on match, otherwise
@@ -41,11 +44,14 @@ private RawOption parseRawOption(string argument) {
     return result;
 }
 
+/**
+ * Parses args.
+ */
 ProgramArgs parse(T)(T program, ref string[] args) {
     return program.parse(args, new ProgramArgs());
 }
 
-ProgramArgs parse(T)(T program, ref string[] args, ProgramArgs init) {
+private ProgramArgs parse(T)(T program, ref string[] args, ProgramArgs init) {
     ProgramArgs result = init;
     result.name = program.name;
 
@@ -226,7 +232,7 @@ unittest {
     import std.exception : assertThrown, assertNotThrown;
     
     assertNotThrown!InvalidArgumentsException(
-        Program("test").parseNoRef(["test"])
+        new Program("test").parseNoRef(["test"])
     );   
 }
 
@@ -236,40 +242,40 @@ unittest {
 
     ProgramArgs a;
 
-    a = Program("test")
+    a = new Program("test")
             .add(Flag("t", "test", ""))
             .parseNoRef(["test"]);
     assert(!a.flag("test"));
     assert(a.option("test") is null);
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Flag("t", "test", ""))
             .parseNoRef(["test", "-t"]);
     assert(a.flag("test"));
     assert(a.option("test") is null);
     assert(a.occurencesOf("test") == 1);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Flag("t", "test", ""))
             .parseNoRef(["test", "--test"]);
     assert(a.flag("test"));
     assert(a.occurencesOf("test") == 1);
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Flag("t", "test", "")) // no repeating
             .parseNoRef(["test", "--test", "-t"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Flag("t", "test", "")) // no repeating
             .parseNoRef(["test", "-tt"])
     );
 
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Flag("t", "test", "")) // no repeating
             .parseNoRef(["test", "--tt"])
     );
@@ -282,50 +288,50 @@ unittest {
 
     ProgramArgs a;
 
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test"]);
     assert(a.option("test") is null);
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test", "-t", "5"]);
     assert(a.option("test") == "5");
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test", "-t=5"]);
     assert(a.option("test") == "5");
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test", "--test", "bar"]);
     assert(a.option("test") == "bar");
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test", "--test=bar"]);
     assert(a.option("test") == "bar");
     assert(a.occurencesOf("test") == 0);
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", ""))
             .parseNoRef(["test", "--test=a", "-t", "k"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", "")) // no repeating
             .parseNoRef(["test", "--test", "-t"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", "")) // no value
             .parseNoRef(["test", "--test"])
     );
@@ -338,24 +344,24 @@ unittest {
 
     ProgramArgs a;
 
-    a = Program("test")
+    a = new Program("test")
             .add(Argument("test", ""))
             .parseNoRef(["test"]);
     assert(a.occurencesOf("test") == 0);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Argument("test", ""))
             .parseNoRef(["test", "t"]);
     assert(a.occurencesOf("test") == 0);
     assert(a.arg("test") == "t");
 
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .parseNoRef(["test", "test", "t"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Argument("test", "")) // no value
             .parseNoRef(["test", "test", "test"])
     );
@@ -366,20 +372,20 @@ unittest {
     import std.exception : assertThrown, assertNotThrown;
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", "").required)
             .parseNoRef(["test"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", ""))
             .add(Argument("path", "").required)
             .parseNoRef(["test", "--test", "bar"])
     );
     
     assertThrown!InvalidArgumentsException(
-        Program("test")
+        new Program("test")
             .add(Argument("test", "").required) // no value
             .parseNoRef(["test"])
     );
@@ -389,13 +395,13 @@ unittest {
 unittest {
     ProgramArgs a;
     
-    a = Program("test")
+    a = new Program("test")
             .add(Flag("t", "test", "").repeating)
             .parseNoRef(["test", "--test", "-t"]);
     assert(a.flag("test"));
     assert(a.occurencesOf("test") == 2);
     
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", "").repeating)
             .parseNoRef(["test", "--test=a", "-t", "k"]);
     assert(a.option("test") == "a");
@@ -408,7 +414,7 @@ unittest {
     {
         int counter = 0;
     
-        Program("test")
+        new Program("test")
             .add(Flag("t", "test", "")
                 .repeating
                 .trigger({
@@ -421,7 +427,7 @@ unittest {
     {
         int counter = 0;
     
-        Program("test")
+        new Program("test")
             .add(Flag("t", "test", "")
                 .repeating
                 .trigger({
@@ -434,7 +440,7 @@ unittest {
     {
         string[] res;
     
-        Program("test")
+        new Program("test")
             .add(Option("t", "test", "")
                 .repeating
                 .trigger((entry) { res ~= entry;}))
@@ -445,7 +451,7 @@ unittest {
     {
         string[] res;
     
-        Program("test")
+        new Program("test")
             .add(Argument("test", "")
                 .repeating
                 .trigger((entry) { res ~= entry;}))
@@ -458,25 +464,25 @@ unittest {
 unittest {
     ProgramArgs a;
 
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", "")
                 .defaultValue("reee"))
             .parseNoRef(["test"]);
     assert(a.option("test") == "reee");
 
-    a = Program("test")
+    a = new Program("test")
             .add(Option("t", "test", "")
                 .defaultValue("reee"))
             .parseNoRef(["test", "--test", "aaa"]);
     assert(a.option("test") == "aaa");
 
-    a = Program("test")
+    a = new Program("test")
             .add(Argument("test", "")
                 .defaultValue("reee"))
             .parseNoRef(["test"]);
     assert(a.arg("test") == "reee");
 
-    a = Program("test")
+    a = new Program("test")
             .add(Argument("test", "")
                 .defaultValue("reee"))
             .parseNoRef(["test", "bar"]);

@@ -2,12 +2,12 @@ module commandr.program;
 
 import commandr.option;
 import commandr.utils;
-import std.algorithm : all;
+import std.algorithm : all, reverse;
 import std.ascii : isAlphaNum;
 import std.string : format;
 
 
-private mixin template OptionAggregate() {
+class Command {
     private string _name;
     private string _version;
     private string _summary;
@@ -15,22 +15,20 @@ private mixin template OptionAggregate() {
     private Option[] _options;
     private Argument[] _arguments;
     private Command[string] _commands;
-    private Program* _root;
-    private string[] _chain;
+    private Command _parent;
 
 
-    public this(string name, string summary = "", string version_ = "1.0") {
+    public this(string name, string summary = "", string version_ = "1.0") pure @safe {
         this._name = name;
         this._summary = summary;
         this._version = version_;
         this.add(Flag("h", "help", "prints help"));
-        this._chain = [_name];
     }
 
     /**
-     * Sets program name
+     * Sets command name
      */
-    public typeof(this) name(string name) nothrow pure {
+    public typeof(this) name(string name) nothrow pure @nogc @safe {
         this._name = name;
         return this;
     }
@@ -38,14 +36,14 @@ private mixin template OptionAggregate() {
     /**
      * Program name
      */
-    public string name() nothrow pure {
+    public string name() nothrow pure @nogc @safe {
         return this._name;
     }
 
     /**
      * Sets program version
      */
-    public typeof(this) version_(string version_) nothrow pure {
+    public typeof(this) version_(string version_) nothrow pure @nogc @safe {
         this._version = version_;
         return this;
     }
@@ -53,14 +51,14 @@ private mixin template OptionAggregate() {
     /**
      * Program version
      */
-    public string version_() nothrow pure {
+    public string version_() nothrow pure @nogc @safe {
         return this._version;
     }
 
     /**
      * Sets program summary (one-liner)
      */
-    public typeof(this) summary(string summary) nothrow pure {
+    public typeof(this) summary(string summary) nothrow pure @nogc @safe {
         this._summary = summary;
         return this;
     }
@@ -68,7 +66,7 @@ private mixin template OptionAggregate() {
     /**
      * Program summary
      */
-    public string summary() nothrow pure {
+    public string summary() nothrow pure @nogc @safe {
         return this._summary;
     }
 
@@ -76,7 +74,7 @@ private mixin template OptionAggregate() {
     /**
      * Adds option
      */
-    public typeof(this) add(Option option) {
+    public typeof(this) add(Option option) pure @safe {
         validateName(option.name);
         validateAbbrev(option.abbrev);
         validateFull(option.full);
@@ -92,14 +90,14 @@ private mixin template OptionAggregate() {
     /**
      * Program options
      */
-    public Option[] options() nothrow pure {
+    public Option[] options() nothrow pure @nogc @safe {
         return this._options;
     }
 
     /**
      * Adds program flag
      */
-    public typeof(this) add(Flag flag) {
+    public typeof(this) add(Flag flag) pure @safe {
         validateName(flag.name);
         validateAbbrev(flag.abbrev);
         validateFull(flag.full);
@@ -111,14 +109,14 @@ private mixin template OptionAggregate() {
     /**
      * Program flags
      */
-    public Flag[] flags() nothrow pure {
+    public Flag[] flags() nothrow pure @nogc @safe {
         return this._flags;
     }
 
     /**
      * Adds program argument
      */
-    public typeof(this) add(Argument argument) {
+    public typeof(this) add(Argument argument) pure @safe {
         validateName(argument.name);
         if (_arguments.length && _arguments[$-1].isRepeating) {
             throw new InvalidProgramException("cannot add arguments past repeating");
@@ -139,27 +137,26 @@ private mixin template OptionAggregate() {
     /**
      * Program arguments
      */
-    public Argument[] arguments() nothrow pure {
+    public Argument[] arguments() nothrow pure @nogc @safe {
         return this._arguments;
     }
 
-    public typeof(this) add(Command command) {
+    public typeof(this) add(Command command) pure @safe {
         if (command.name in this._commands) {
             throw new InvalidProgramException("duplicate command %s".format(command.name));
         }
 
-        command._root = this._root;
-        command._chain = this._chain ~ command._chain;
+        command._parent = this;
         _commands[command.name] = command;
 
         return this;
     }
 
-    public Command[string] commands() nothrow pure {
+    public Command[string] commands() nothrow pure @nogc @safe {
         return this._commands;
     }
 
-    private void validateName(string name) {
+    private void validateName(string name) pure @safe {
         if (!name) {
             throw new InvalidProgramException("name cannot be empty");
         }
@@ -190,7 +187,7 @@ private mixin template OptionAggregate() {
         }
     }
 
-    private void validateAbbrev(string abbrev) {
+    private void validateAbbrev(string abbrev) pure @safe {
         if (!abbrev) {
             return;
         }
@@ -210,7 +207,7 @@ private mixin template OptionAggregate() {
         }
     }
 
-    private void validateFull(string full) {
+    private void validateFull(string full) pure @safe {
         if (!full) {
             return;
         }
@@ -230,8 +227,15 @@ private mixin template OptionAggregate() {
         }
     }
 
-    public string[] chain() {
-        return this._chain;
+    public string[] chain() pure nothrow @safe {
+        string[] chain = [this.name];
+        Command curr = this._parent;
+        while (curr !is null) {
+            chain ~= curr.name;
+            curr = curr._parent;
+        }
+
+        return chain.reverse();
     }
 
     private void addBasicOptions() {
@@ -239,43 +243,66 @@ private mixin template OptionAggregate() {
     }
 }
 
-struct Command {
-    mixin OptionAggregate;
-}
-
-struct Program {
-    mixin OptionAggregate;
+class Program: Command {
     private string _binaryName;
     private string[] _authors;
 
-
     public this(string name, string version_ = "1.0") {
-        this._name = name;
-        this._version = version_;
-        this._root = &this;
+        super(name, null, version_);
         this.addBasicOptions();
+    }
+
+    /**
+     * Sets program name
+     */
+    public override typeof(this) name(string name) nothrow pure @nogc @safe {
+        return cast(Program)super.name(name);
+    }
+
+    public override string name() const nothrow pure @nogc @safe {
+        return this._name;
+    }
+
+    public override typeof(this) version_(string version_) nothrow pure @nogc @safe {
+        return cast(Program)super.version_(version_);
+    }
+
+    public override string version_() const nothrow pure @nogc @safe {
+        return this._version;
+    }
+
+    public override typeof(this) summary(string summary) nothrow pure @nogc @safe {
+        return cast(Program)super.summary(summary);
+    }
+
+    public override string summary() nothrow pure @nogc @safe {
+        return this._summary;
+    }
+
+    public typeof(this) add(T)(T data) pure @safe {
+        super.add(data);
+        return this;
     }
 
     /**
      * Sets program binary name
      */
-    public typeof(this) binaryName(string binaryName) nothrow pure {
+    public typeof(this) binaryName(string binaryName) nothrow pure @nogc @safe {
         this._binaryName = binaryName;
-        this._chain = [binaryName];
         return this;
     }
 
     /**
      * Program binary name
      */
-    public string binaryName() nothrow pure {
+    public string binaryName() const nothrow pure @nogc @safe {
         return (this._binaryName !is null) ? this._binaryName : this._name;
     }
 
     /**
      * Adds program author
      */
-    public typeof(this) author(string author) nothrow pure {
+    public typeof(this) author(string author) nothrow pure @safe {
         this._authors ~= author;
         return this;
     }
@@ -283,7 +310,7 @@ struct Program {
     /**
      * Sets program authors
      */
-    public typeof(this) authors(string[] authors) nothrow pure {
+    public typeof(this) authors(string[] authors) nothrow pure @nogc @safe {
         this._authors = authors;
         return this;
     }
@@ -291,7 +318,7 @@ struct Program {
     /**
      * Program authors
      */
-    public string[] authors() nothrow pure {
+    public string[] authors() nothrow pure @nogc @safe {
         return this._authors;
     }
 }
@@ -299,7 +326,7 @@ struct Program {
 unittest {
     import std.range : empty;
 
-    auto program = Program("test");
+    auto program = new Program("test");
     assert(program.name == "test");
     assert(program.binaryName == "test");
     assert(program.version_ == "1.0");
@@ -317,23 +344,23 @@ unittest {
 }
 
 unittest {
-    auto program = Program("test").name("bar");
+    auto program = new Program("test").name("bar");
     assert(program.name == "bar");
     assert(program.binaryName == "bar");
 }
 
 unittest {
-    auto program = Program("test", "0.1");
+    auto program = new Program("test", "0.1");
     assert(program.version_ == "0.1");
 }
 
 unittest {
-    auto program = Program("test", "0.1").version_("2.0").version_("kappa");
+    auto program = new Program("test", "0.1").version_("2.0").version_("kappa");
     assert(program.version_ == "kappa");
 }
 
 unittest {
-    auto program = Program("test").binaryName("kappa");
+    auto program = new Program("test").binaryName("kappa");
     assert(program.name == "test");
     assert(program.binaryName == "kappa");
 }
@@ -345,21 +372,21 @@ unittest {
     // FLAGS
     // flag-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc").name("nnn"))
             .add(Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc").name("nnn"))
             .add(Option("b", "bbb", "desc").name("nnn"))
     );
 
     // flag-argument
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc").name("nnn"))
             .add(Argument("nnn"))
     );
@@ -368,21 +395,21 @@ unittest {
     // OPTIONS
     // option-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc").name("nnn"))
             .add(Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc").name("nnn"))
             .add(Option("b", "bbb", "desc").name("nnn"))
     );
 
     // option-argument
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc").name("nnn"))
             .add(Argument("nnn"))
     );
@@ -391,21 +418,21 @@ unittest {
     // ARGUMENTS
     // argument-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("nnn"))
             .add(Flag("b", "bbb", "desc").name("nnn"))
     );
 
     // argument-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("nnn"))
             .add(Option("b", "bbb", "desc").name("nnn"))
     );
 
     // argument-argument
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("nnn"))
             .add(Argument("nnn"))
     );
@@ -418,14 +445,14 @@ unittest {
     // FLAGS
     // flag-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc"))
             .add(Flag("a", "bbb", "desc"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc"))
             .add(Option("a", "bbb", "desc"))
     );
@@ -433,14 +460,14 @@ unittest {
     // FLAGS
     // option-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc"))
             .add(Flag("a", "bbb", "desc"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc"))
             .add(Option("a", "bbb", "desc"))
     );
@@ -453,14 +480,14 @@ unittest {
     // FLAGS
     // flag-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc"))
             .add(Flag("b", "aaa", "desc"))
     );
 
     // flag-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Flag("a", "aaa", "desc"))
             .add(Option("b", "aaa", "desc"))
     );
@@ -468,14 +495,14 @@ unittest {
     // FLAGS
     // option-flag
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc"))
             .add(Flag("b", "aaa", "desc"))
     );
 
     // option-option
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("a", "aaa", "desc"))
             .add(Option("b", "aaa", "desc"))
     );
@@ -486,7 +513,7 @@ unittest {
 
     // repating
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("file", "path").repeating)
             .add(Argument("dir", "desc"))
     );
@@ -497,7 +524,7 @@ unittest {
     import std.exception : assertThrown;
 
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("file", "path"))
             .add(Argument("dir", "desc").required)
     );
@@ -508,12 +535,12 @@ unittest {
     import std.exception : assertThrown;
 
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Option("d", "dir", "desc").required.defaultValue("test"))
     );
 
     assertThrown!InvalidProgramException(
-        Program("test")
+        new Program("test")
             .add(Argument("dir", "desc").required.defaultValue("test"))
     );
 }

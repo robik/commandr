@@ -21,7 +21,7 @@ void main(string[] args) {
     ProgramArgs a;
 
     try {
-	    p = Program("test", "1.0")
+	    p = new Program("test", "1.0")
             .summary("Command line parser")
             .author("John Doe <me@foo.bar.com>")
             .add(Flag("v", null, "turns on more verbose output")
@@ -99,13 +99,15 @@ Add this entry to your `dub.json` file:
 ## Limitations
 
 TODO: Automatic BASH completion script
-TODO: Combined options `-qLop`
+TODO: Combined options `-qLop` (makes `-option` behind switch)
 TODO: validations
 TODO: enum/value sets
 TODO: conflicts
+TODO: allocator support
 TODO: With negative value (`no-` prefix)
 TODO: hinting (for completion)
 TODO: suggestions
 TODO: help output grouping
 TODO: better help configuration and output
 TODO: strict
+TODO: more help customisable sections

@@ -11,11 +11,16 @@ import std.range : chain, empty;
 
 struct HelpOutput {
     bool colors;
+    int indent = 20;
 }
 
 void printHelp(T)(T program) {
     static if (is(T == Program)) {
         writefln("%s: %s \033[2m(%s)\033[0m", program.name, program.summary, program.version_);
+        writeln();
+    }
+    else {
+        writefln("%s: %s", program.chain.join(" "), program.summary);
         writeln();
     }
 
@@ -51,7 +56,7 @@ void printHelp(T)(T program) {
     if (!program.commands.empty) {
         writeln("\033[1mSUB-COMMANDS\033[0m");
         foreach(key, command; program.commands) {
-            writefln("  %-16s %s", key, command.summary);
+            writefln("  %-28s%s", key, command.summary);
         }
         writeln();
     }
@@ -61,18 +66,20 @@ void printUsage(Program program) {
     string optionsUsage = "[options]";    
     if (program.options.length + program.flags.length <= 8) {
         optionsUsage = chain(
-            program.flags.map!(o => optionUsage(o)),
-            program.options.map!(o => optionUsage(o))
+            program.flags.map!optionUsage,
+            program.options.map!optionUsage
         ).join(" ");
     }
 
     string commands = program.commands.empty ? "" : (
         "<%s>".format(program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|"))
     );
-    writefln("%s %s %s %s", 
+    string args = program.arguments.map!(argUsage).join(" ");
+
+    writefln("%s %s %s%s", 
         program.binaryName, 
         optionsUsage, 
-        program.arguments.map!(argUsage).join(" "),
+        args.empty ? "" : args ~ " ",
         commands
     );
 }
@@ -81,19 +88,20 @@ void printUsage(Command command) {
     string optionsUsage = "[options]";    
     if (command.options.length + command.flags.length <= 8) {
         optionsUsage = chain(
-            command.flags.map!(o => optionUsage(o)),
-            command.options.map!(o => optionUsage(o))
+            command.flags.map!optionUsage,
+            command.options.map!optionUsage
         ).join(" ");
     }
 
     string commands = command.commands.empty ? "" : (
         "<%s>".format(command.commands.length > 6 ? "COMMAND" : command.commands.keys.join("|"))
     );
-    writefln("%s %s %s %s %s", 
-        command.chain.join(" "), 
-        command.name,
+    string args = command.arguments.map!(argUsage).join(" ");
+
+    writefln("%s %s %s%s", 
+        command.chain.join(" "),
         optionsUsage, 
-        command.arguments.map!(argUsage).join(" "),
+        args.empty ? "" : args ~ " ",
         commands
     );
 }

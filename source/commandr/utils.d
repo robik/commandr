@@ -7,7 +7,7 @@ import std.typecons : Tuple, Nullable;
 
 // helpers
 
-private Nullable!T wrapIntoNullable(T)(T[] data) {
+private Nullable!T wrapIntoNullable(T)(T[] data) pure nothrow @safe @nogc {
     Nullable!T result;
     if (data.length > 0) {
         result = data[0];
@@ -27,36 +27,36 @@ unittest {
     assert(wrapped.get() == "test");
 }
 
-Nullable!Argument getArgumentByName(T)(T aggregate, string name) nothrow pure {
+Nullable!Argument getArgumentByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.arguments.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByName(T)(T aggregate, string name) nothrow pure {
+Nullable!Option getOptionByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.options.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByName(T)(T aggregate, string name) nothrow pure {
+Nullable!Flag getFlagByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.flags.find!(o => o.name == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByFull(T)(T aggregate, string name) nothrow pure {
+Nullable!Option getOptionByFull(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.options.find!(o => o.full == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByFull(T)(T aggregate, string name) nothrow pure {
+Nullable!Flag getFlagByFull(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.flags.find!(o => o.full == name).wrapIntoNullable;
 }
 
-Nullable!Option getOptionByShort(T)(T aggregate, string name) nothrow pure {
+Nullable!Option getOptionByShort(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.options.find!(o => o.abbrev == name).wrapIntoNullable;
 }
 
-Nullable!Flag getFlagByShort(T)(T aggregate, string name) nothrow pure {
+Nullable!Flag getFlagByShort(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.flags.find!(o => o.abbrev == name).wrapIntoNullable;
 }
 
 class InvalidProgramException: Exception {
-    public this(string msg) {
+    public this(string msg) pure @safe {
         super(msg);
     }
 }
