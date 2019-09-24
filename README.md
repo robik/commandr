@@ -5,7 +5,7 @@ Command Line arguments parser for modern age.
 
 ## About
 
-`commandr` is a library that makes handling command-line arguments as effortless as possible, while maintaining 
+`commandr` is a library that makes handling command-line arguments effortless, while maintaining 
 a clean and intuitive API. Rather than making you focus on parsing the arguments yourself, you describe your program
 arguments by creating a `Program` model. Arguments parsing, help output and auto-completion is provided by `commandr`.
 
@@ -76,15 +76,16 @@ Add this entry to your `dub.json` file:
    - Repeated options are supported (only last argument)
 
  - **Commands** (git-style)
-   - Infinitely recursive
+   - Infinitely recursive subcommands (you can go as deep as needed)
    - Contains own set of flags/options and arguments
    - Dedicated help output
    - Comfortable command handling with `ProgramArgs.on`
 
- - **Automated help generation**
+ - **Provided help output**
+   - Generated help output for your program and sub-commands
    - Can be configured/partially overriden to suit your needs, such as forced disabling of ANSI codes.
    - Provided usage, help and version information.
-   - Completly detached from core `Program`, giving you complete freedom in writing your own.
+   - Completly detached from core `Program`, giving you complete freedom in writing your own help output.
 
  - **Consistency checking**
    - When you build your program model, `commandr` checks its consistency.
@@ -95,12 +96,20 @@ Add this entry to your `dub.json` file:
    - You can specify multiple triggers on a flag/option/argument that gets called when a parameter is found.
    - Useful when you need to cover that _edge case_ scenario.
 
+ - **BASH auto-complete script**
+   - You can generate completion script automatically
+   - Completion script works on flags, options and sub-commands (at any depth)
+   - Acknowledges difference between flags and options
+   
 
 ## Limitations
 
 TODO: validations
 TODO: enum/value sets
-TODO: Automatic BASH completion script
+TODO: aliases
+TODO: documentation
+TODO: enironment variables?
+TODO: help subcommand
 TODO: Combined options `-qLop` (makes `-option` behind switch)
 TODO: conflicts
 TODO: allocator support

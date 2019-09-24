@@ -6,7 +6,7 @@ import std.algorithm : filter, map;
 import std.array : join;
 import std.stdio : writefln, writeln, write;
 import std.string : format;
-import std.range : chain, empty;
+import std.range : chain, empty, padRight;
 
 
 struct HelpOutput {
@@ -54,9 +54,9 @@ void printHelp(T)(T program) {
     }
 
     if (!program.commands.empty) {
-        writeln("\033[1mSUB-COMMANDS\033[0m");
+        writeln("\033[1mSUBCOMMANDS\033[0m");
         foreach(key, command; program.commands) {
-            writefln("  %-28s%s", key, command.summary);
+            writefln("  %-28s\033[2m%s\033[0m", key, command.summary);
         }
         writeln();
     }
@@ -113,8 +113,10 @@ private void printHelp(Flag flag) {
 
 private void printHelp(Option option) {
     string left = optionNames(option);
+    size_t length = left.length + option.tag.length + 1;
+    string formatted = "%s \033[4m%s\033[0m".format(left, option.tag);
 
-    writefln("  %-26s  \033[2m%s\033[0m", "%s=%s".format(left, option.tag), option.description);
+    writefln("  %s  \033[2m%s\033[0m", formatted.padRight(' ', 26 + (formatted.length - length)), option.description);
 }
 
 private void printHelp(Argument arg) {
@@ -153,7 +155,7 @@ private string optionUsage(T)(T o) {
 
     static if (is(T == Option)) {
         if (!o.isRequired) {
-            result = "[%s]".format(result);
+            result = "[%s \033[4m%s\033[0m]".format(result, o.tag);
         }
     }
     else {

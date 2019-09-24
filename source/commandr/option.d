@@ -140,7 +140,7 @@ class Option {
     mixin Triggerable!string;
     mixin Defaultable!string;
 
-    private string _tag = "VALUE";
+    private string _tag = "value";
 
 
     public this(string name) pure nothrow @safe @nogc {

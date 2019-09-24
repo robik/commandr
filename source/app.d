@@ -1,16 +1,21 @@
 import std.stdio;
 import commandr;
+import commandr.completion.bash;
+import std.file;
+
 
 void main(string[] args) {
     Program p;
 
     try {
-	    p = new Program("test", "1.0")
+	    p = new Program("commandr", "1.0")
             .summary("Command line parser")
             .author("John Doe <me@foo.bar.com>")
             .add(new Flag("v", null, "turns on more verbose output")
                 .name("verbose")
                 .repeating)
+            .add(new Flag("r", "root", "turns on more verbose output")
+                .name("root"))
             .add(new Option(null, "test", "some teeeest"))
             .add(new Command("help", "prints help"))
             .add(new Command("dummy", "prints dummy text")
@@ -24,6 +29,8 @@ void main(string[] args) {
         auto a = p.parse(args);
         a.on("dummy", (args) {
             writefln("DUMMY command. verbose: %s, loud: %s on path %s", args.flag("verbose"), args.flag("loud"), a.arg("path"));
+
+            std.file.write("completion.bash", p.createBashCompletionScript());
         }).on("branch", (args) {
             args.on("add", (args) {
                 writeln("adding branch");
