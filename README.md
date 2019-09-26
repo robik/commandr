@@ -1,48 +1,51 @@
-# commandr
+<!-- LOGO -->
+<p align="center">
+  <a href="https://github.com/othneildrew/Best-README-Template">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
 
-Command Line arguments parser for modern age.
+  <h3 align="center">commandr</h3>
+
+  <p align="center">
+    A modern, powerful commmand line argument parser. 
+    <br>
+    Batteries included.
+    <br />
+    <br />
+    <a href="https://robik.github.io/commandr/"><strong>📗 Explore the docs »</strong></a>
+    <br />
+    <a href="https://github.com/robik/commandr/issues">❗️ Report a bug</a>
+    ·
+    <a href="https://github.com/robik/commandr/issues">💡 Request feature</a>    
+    <br />  
+    <br />
+    <img src="https://img.shields.io/github/issues/robik/commandr.svg?style=flat-square">
+    <img src="https://img.shields.io/github/license/robik/commandr.svg?style=flat-square">
+    <br />
+  </p>
+</p>
+
+- - -
+
+**commandr** handles all kinds of command-line arguments with a nice and clean interface.
+Comes with help generation, shell auto-complete scripts and validation. 
 
 
-## About
+## Table of Contents
 
-`commandr` is a library that makes handling command-line arguments effortless, while maintaining 
-a clean and intuitive API. Rather than making you focus on parsing the arguments yourself, you describe your program
-arguments by creating a `Program` model. Arguments parsing, help output and auto-completion is provided by `commandr`.
+ - [Example](#example)
+ - [Installation](#installation)
+ - [Features](#features)
+ - [Getting Started](#getting-started)
+   - [Usage](#usage)
+   - [Configuration](#configuration)
+ - [Roadmap](#roadmap)
+ - [License](#license)
 
 
 ## Example
 
-```D
-import std.stdio;
-import commandr;
-
-void main(string[] args) {
-    Program p;
-    ProgramArgs a;
-
-    try {
-	    p = new Program("test", "1.0")
-            .summary("Command line parser")
-            .author("John Doe <me@foo.bar.com>")
-            .add(new Flag("v", null, "turns on more verbose output")
-                .name("verbose")
-                .repeating)
-            .add(new Option(null, "test", "some teeeest"))
-            .add(new Argument("path", "Path to file to edit")
-                .required)
-            ;
-
-        a = p.parse(args);
-        writeln("verbosity level", a.occurencesOf("verbose"));
-        writeln("arg: ", a.arg("path"));
-    } catch(InvalidProgramException e) {
-        writeln("Whoops, program declaration is wrong: ", e.msg);
-    } catch(InvalidArgumentsException e) {
-        writeln("Error: ", e.msg);
-        p.printUsage();
-    }
-}
-```
+![Example Help output](./images/help.png)
 
 ## Installation
 
@@ -92,32 +95,61 @@ Add this entry to your `dub.json` file:
    - Detects name duplications as well as short/long options.
    - Detects required parameters with default value.
 
- - **Triggers**
-   - You can specify multiple triggers on a flag/option/argument that gets called when a parameter is found.
-   - Useful when you need to cover that _edge case_ scenario.
-
  - **BASH auto-complete script**
    - You can generate completion script automatically
    - Completion script works on flags, options and sub-commands (at any depth)
    - Acknowledges difference between flags and options
-   
 
-## Limitations
+ - **Validators**
+   - 
 
-TODO: validations
-TODO: enum/value sets
-TODO: aliases
-TODO: documentation
-TODO: enironment variables?
-TODO: help subcommand
-TODO: Combined options `-qLop` (makes `-option` behind switch)
-TODO: conflicts
-TODO: allocator support
-TODO: With negative value (`no-` prefix)
-TODO: hinting (for completion)
-TODO: suggestions
-TODO: help output grouping
-TODO: better help configuration and output
-TODO: strict
-TODO: more help customisable sections
-TODO: better print of subcommands (parent required options and args)
+
+## Getting Started
+
+### Usage
+
+```D
+import std.stdio;
+import commandr;
+
+void main(string[] args) {
+    auto a = new Program("test", "1.0")
+          .summary("Command line parser")
+          .author("John Doe <me@foo.bar.com>")
+          .add(new Flag("v", null, "turns on more verbose output")
+              .name("verbose")
+              .repeating)
+          .add(new Option(null, "test", "some teeeest"))
+          .add(new Argument("path", "Path to file to edit")
+              .required)
+          .parse(args);
+
+      writeln("verbosity level", a.occurencesOf("verbose"));
+      writeln("arg: ", a.arg("path"));
+}
+```
+
+## Configuration
+
+## Roadmap
+
+See the [open issues](https://github.com/robik/commandr/issues) for a list of proposed features (and known issues).
+
+Planned features:
+
+- TODO: aliases
+- TODO: completion tests
+- TODO: help subcommand
+- TODO: Combined options `-qLop` (makes `-option` behind switch)
+- TODO: conflicts
+- TODO: programargs hierarchy conflicts
+- TODO: allocator support
+- TODO: With negative value (`no-` prefix)
+- TODO: hinting (for completion)
+- TODO: suggestions
+- TODO: environment variables?
+- TODO: help output grouping
+- TODO: better help configuration and output
+- TODO: strict (repeating checks; options all on single is error and - option on repeating is error)
+- TODO: more help customisable sections
+- TODO: better print of subcommands (parent required options and args)
