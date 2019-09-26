@@ -7,6 +7,12 @@ import std.ascii : isAlphaNum;
 import std.string : format;
 
 
+class InvalidProgramException : Exception {
+    this(string msg) nothrow pure @safe {
+        super(msg);
+    }
+}
+
 class Command {
     private string _name;
     private string _version;
@@ -101,6 +107,14 @@ class Command {
         validateName(flag.name);
         validateAbbrev(flag.abbrev);
         validateFull(flag.full);
+
+        if (flag.defaultValue) {
+            throw new InvalidProgramException("flag %s cannot have default value".format(flag.name));
+        }
+
+        if (flag.isRequired) {
+            throw new InvalidProgramException("flag %s cannot be required".format(flag.name));
+        }
 
         this._flags ~= flag;
         return this;

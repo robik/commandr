@@ -14,21 +14,27 @@ void main(string[] args) {
             .add(new Flag("v", null, "turns on more verbose output")
                 .name("verbose")
                 .repeating)
-            .add(new Flag("r", "root", "turns on more verbose output")
-                .name("root"))
+            .add(new Option("c", "config", "path to config file")
+                .name("config")
+                .acceptsFiles)
+            .add(new Option("s", "scope", "scope type")
+                .name("scope")
+                .acceptsValues(["local", "global", "any"]))
             .add(new Option(null, "test", "some teeeest"))
             .add(new Command("help", "prints help"))
             .add(new Command("dummy", "prints dummy text")
                 .add(new Flag("l", "loud", ""))
             )
-            .add(new Command("branch", "branch managament")
-                .add(new Command("add", "adds branch"))
-                .add(new Command("rm", "removes branch"))
-            );
+            // .add(new Command("branch", "branch managament")
+                // .add(new Command("add", "adds branch"))
+                // .add(new Command("rm", "removes branch"))
+            // )
+            ;
 
         auto a = p.parse(args);
         a.on("dummy", (args) {
             writefln("DUMMY command. verbose: %s, loud: %s on path %s", args.flag("verbose"), args.flag("loud"), a.arg("path"));
+            writefln("scope: %s, config: %s", args.option("scope"), args.option("config"));
 
             std.file.write("completion.bash", p.createBashCompletionScript());
         }).on("branch", (args) {

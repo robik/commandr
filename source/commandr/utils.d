@@ -55,8 +55,19 @@ Nullable!Flag getFlagByShort(T)(T aggregate, string name) nothrow pure @safe @no
     return aggregate.flags.find!(o => o.abbrev == name).wrapIntoNullable;
 }
 
-class InvalidProgramException: Exception {
-    public this(string msg) pure @safe {
-        super(msg);
+string getEntryKindName(IEntry entry) nothrow pure @safe {
+    if (cast(Option)entry) {
+        return "option";
+    }
+
+    else if (cast(Flag)entry) {
+        return "flag";
+    }
+
+    else if (cast(Argument)entry) {
+        return "argument";
+    }
+    else {
+        return null;
     }
 }

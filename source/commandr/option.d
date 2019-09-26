@@ -1,61 +1,36 @@
 module commandr.option;
 
+import commandr.validators;
 
-mixin template Requireable() {
-    private bool _required;
 
-    public typeof(this) required(bool required = true) pure nothrow @safe @nogc {
-        this._required = required;
-        return this;
-    }
+interface IEntry {
+    public typeof(this) name(string name) pure nothrow @safe @nogc;
+    public string name() const pure nothrow @safe @nogc;
 
-    public typeof(this) optional(bool optional = true) pure nothrow @safe @nogc {
-        this._required = !optional;
-        return this;
-    }
+    public typeof(this) description(string description) pure nothrow @safe @nogc;
+    public string description() const pure nothrow @safe @nogc;
 
-    public bool isRequired() const pure nothrow @safe @nogc {
-        return this._required;
-    }
+    public typeof(this) repeating(bool repeating = true) pure nothrow @safe @nogc;
+    public bool isRepeating() const pure nothrow @safe @nogc;
+
+    public typeof(this) required(bool required = true) pure nothrow @safe @nogc;
+    public typeof(this) optional(bool optional = true) pure nothrow @safe @nogc;
+    public bool isRequired() const pure nothrow @safe @nogc;
+
+    public typeof(this) defaultValue(string defaultValue) pure nothrow @safe @nogc;
+    public string defaultValue() const pure nothrow @safe @nogc;
+
+    public typeof(this) validate(IValidator validator) pure @safe;
+    public IValidator[] validators() pure nothrow @safe @nogc;
 }
 
-mixin template Triggerable(T...) {
-    alias TriggerHandler = void delegate(T);
-    private TriggerHandler[] _triggers;
-
-    public typeof(this) trigger(TriggerHandler handler) pure nothrow @safe {
-        _triggers ~= handler;
-        return this;
-    }
-
-    public TriggerHandler[] triggers() pure nothrow @safe @nogc {
-        return this._triggers;
-    }
-
-    public void dispatchTriggers(T data) {
-        foreach(trigger; _triggers) {
-            trigger(data);
-        }
-    }
-}
-
-mixin template Defaultable(T) {
-    private T _default;
-
-    public typeof(this) defaultValue(T defaultValue) pure nothrow @safe @nogc {
-        this._default = defaultValue;
-        return this;
-    }
-
-    public T defaultValue() const pure nothrow @safe @nogc {
-        return this._default;
-    }
-}
-
-mixin template BaseArgument() {
+mixin template EntryImpl() {
     private string _name;
     private string _description;
-    private bool _repeating;
+    private bool _repeating = false;
+    private bool _required = false;
+    private string _default;
+    private IValidator[] _validators;
 
 
     public typeof(this) name(string name) pure nothrow @safe @nogc {
@@ -84,10 +59,52 @@ mixin template BaseArgument() {
     public bool isRepeating() const pure nothrow @safe @nogc {
         return this._repeating;
     }
+
+    public typeof(this) required(bool required = true) pure nothrow @safe @nogc {
+        this._required = required;
+        return this;
+    }
+
+    public typeof(this) optional(bool optional = true) pure nothrow @safe @nogc {
+        this._required = !optional;
+        return this;
+    }
+
+    public bool isRequired() const pure nothrow @safe @nogc {
+        return this._required;
+    }
+
+    public typeof(this) defaultValue(string defaultValue) pure nothrow @safe @nogc {
+        this._default = defaultValue;
+        return this;
+    }
+
+    public string defaultValue() const pure nothrow @safe @nogc {
+        return this._default;
+    }
+
+    public typeof(this) validate(IValidator validator) pure @safe {
+        this._validators ~= validator;
+        return this;
+    }
+
+    public IValidator[] validators() pure nothrow @safe @nogc {
+        return this._validators;
+    }
 }
 
+interface IOption {
+    public typeof(this) full(string full) pure nothrow @safe @nogc;
+    public string full() const pure nothrow @safe @nogc;
 
-mixin template BaseOption() {
+    public typeof(this) abbrev(string abbrev) pure nothrow @safe @nogc;
+    public string abbrev() const pure nothrow @safe @nogc;
+
+    public alias long_ = full;
+    public alias short_ = abbrev;
+}
+
+mixin template OptionImpl() {
     private string _abbrev;
     private string _full;
 
@@ -114,11 +131,9 @@ mixin template BaseOption() {
 }
 
 
-class Flag {
-    mixin BaseArgument;
-    mixin BaseOption;
-    mixin Triggerable!();
-
+class Flag: IEntry, IOption {
+    mixin EntryImpl;
+    mixin OptionImpl;
 
     public this(string name) pure nothrow @safe @nogc {
         this._name = name;
@@ -133,15 +148,11 @@ class Flag {
     }
 }
 
-class Option {
-    mixin BaseArgument;
-    mixin BaseOption;
-    mixin Requireable;
-    mixin Triggerable!string;
-    mixin Defaultable!string;
+class Option: IEntry, IOption {
+    mixin OptionImpl;
+    mixin EntryImpl;
 
     private string _tag = "value";
-
 
     public this(string name) pure nothrow @safe @nogc {
         this._name = name;
@@ -165,14 +176,17 @@ class Option {
     }
 }
 
-class Argument {
-    mixin BaseArgument;
-    mixin Requireable;
-    mixin Triggerable!string;
-    mixin Defaultable!string;
+class Argument: IEntry {
+    mixin EntryImpl;
 
     this(string name, string description = null) {
         this._name = name;
         this._description = description;
+    }
+}
+
+class InvalidArgumentsException: Exception {
+    this(string msg) nothrow pure @safe @nogc {
+        super(msg);
     }
 }
