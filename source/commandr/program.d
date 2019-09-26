@@ -1,30 +1,85 @@
+/**
+ * Program data model
+ *
+ * This module along with `commandr.option` contains all types needed to build
+ * your program model - program options, flags, arguments and all subcommands.
+ *
+ * After creating your program model, you can use it to:
+ *  - parse the arguments with `parse` or `parseArgs`
+ *  - print help with `printHelp` or just the usage with `printUsage`
+ *  - create completion script with `createBashCompletionScript`
+ *
+ * Examples:
+ * ---
+ * auto program = new Program("grit")
+ *         .add(new Flag("v", "verbose", "verbosity"))
+ *         .add(new Command("branch", "branch management")
+ *             .add(new Command("add", "adds branch")
+ *                 .add(new Argument("name"))
+ *             )
+ *             .add(new Command("rm", "removes branch")
+ *                 .add(new Argument("name"))
+ *             )
+ *         )
+ *      ;
+ * ---
+ *
+ * See_Also:
+ *   `Command`, `Program`, `parse`
+ */
 module commandr.program;
 
 import commandr.option;
 import commandr.utils;
 import std.algorithm : all, reverse;
 import std.ascii : isAlphaNum;
+import std.range : empty;
 import std.string : format;
 
 
-class InvalidProgramException : Exception {
-    this(string msg) nothrow pure @safe {
+/**
+ * Thrown when program definition contains error.
+ *
+ * Errors include (but not limited to): duplicate entry name, option with no short and no long value.
+ */
+public class InvalidProgramException : Exception {
+    /// Creates new instance of InvalidProgramException
+    public this(string msg) nothrow pure @safe {
         super(msg);
     }
 }
 
-class Command {
+/**
+ * Represents a command.
+ *
+ * Commands contain basic information such as name, version summary as well as
+ * flags, options, arguments and sub-commands.
+ *
+ * `Program` is a `Command` as well, thus all methods are available in `Program`.
+ *
+ * See_Also:
+ *   `Program`
+ */
+public class Command {
     private string _name;
     private string _version;
     private string _summary;
+    private Object[string] _nameMap;
     private Flag[] _flags;
     private Option[] _options;
     private Argument[] _arguments;
     private Command[string] _commands;
     private Command _parent;
 
-
-    public this(string name, string summary = "", string version_ = "1.0") pure @safe {
+    /**
+     * Creates new instance of Command.
+     *
+     * Params:
+     *   name - command name
+     *   summary - command summary (one-liner)
+     *   version_ - command version
+     */
+    public this(string name, string summary = null, string version_ = "1.0") pure @safe {
         this._name = name;
         this._summary = summary;
         this._version = version_;
@@ -33,6 +88,9 @@ class Command {
 
     /**
      * Sets command name
+     *
+     * Params:
+     *   name - unique name
      */
     public typeof(this) name(string name) nothrow pure @nogc @safe {
         this._name = name;
@@ -47,7 +105,7 @@ class Command {
     }
 
     /**
-     * Sets program version
+     * Sets command version
      */
     public typeof(this) version_(string version_) nothrow pure @nogc @safe {
         this._version = version_;
@@ -79,34 +137,39 @@ class Command {
 
     /**
      * Adds option
+     *
+     * Throws:
+     *   `InvalidProgramException`
      */
     public typeof(this) add(Option option) pure @safe {
         validateName(option.name);
-        validateAbbrev(option.abbrev);
-        validateFull(option.full);
+        validateOption(option);
 
         if (option.isRequired && option.defaultValue) {
             throw new InvalidProgramException("cannot have required option with default value");
         }
 
-        this._options ~= option;
+        _options ~= option;
+        _nameMap[option.name] = option;
         return this;
     }
 
     /**
-     * Program options
+     * Command options
      */
     public Option[] options() nothrow pure @nogc @safe {
         return this._options;
     }
 
     /**
-     * Adds program flag
+     * Adds command flag
+     *
+     * Throws:
+     *   `InvalidProgramException`
      */
     public typeof(this) add(Flag flag) pure @safe {
         validateName(flag.name);
-        validateAbbrev(flag.abbrev);
-        validateFull(flag.full);
+        validateOption(flag);
 
         if (flag.defaultValue) {
             throw new InvalidProgramException("flag %s cannot have default value".format(flag.name));
@@ -116,22 +179,31 @@ class Command {
             throw new InvalidProgramException("flag %s cannot be required".format(flag.name));
         }
 
-        this._flags ~= flag;
+        if (flag.validators) {
+            throw new InvalidProgramException("flag %s cannot have validators".format(flag.name));
+        }
+
+        _flags ~= flag;
+        _nameMap[flag.name] = flag;
         return this;
     }
 
     /**
-     * Program flags
+     * Command flags
      */
     public Flag[] flags() nothrow pure @nogc @safe {
         return this._flags;
     }
 
     /**
-     * Adds program argument
+     * Adds command argument
+     *
+     * Throws:
+     *   `InvalidProgramException`
      */
     public typeof(this) add(Argument argument) pure @safe {
         validateName(argument.name);
+
         if (_arguments.length && _arguments[$-1].isRepeating) {
             throw new InvalidProgramException("cannot add arguments past repeating");
         }
@@ -145,19 +217,35 @@ class Command {
         }
 
         this._arguments ~= argument;
+        _nameMap[argument.name] = argument;
         return this;
     }
 
     /**
-     * Program arguments
+     * Command arguments
      */
     public Argument[] arguments() nothrow pure @nogc @safe {
         return this._arguments;
     }
 
+    /**
+     * Registers subcommand
+     *
+     * Throws:
+     *   `InvalidProgramException`
+     */
     public typeof(this) add(Command command) pure @safe {
         if (command.name in this._commands) {
             throw new InvalidProgramException("duplicate command %s".format(command.name));
+        }
+
+        // this is also checked by adding argument, but we want better error message
+        if (!_arguments.empty && _arguments[$-1].isRepeating) {
+            throw new InvalidProgramException("cannot have sub-commands and repeating argument");
+        }
+
+        if (!_arguments.empty && !_arguments[$-1].isRequired) {
+            throw new InvalidProgramException("cannot have sub-commands and non-required argument");
         }
 
         command._parent = this;
@@ -166,81 +254,20 @@ class Command {
         return this;
     }
 
+    /**
+     * Command sub-commands
+     */
     public Command[string] commands() nothrow pure @nogc @safe {
         return this._commands;
     }
 
-    private void validateName(string name) pure @safe {
-        if (!name) {
-            throw new InvalidProgramException("name cannot be empty");
-        }
-
-        if (!name.all!(c => isAlphaNum(c) || c == '_')()) {
-            throw new InvalidProgramException("invalid name '%s' passed".format(name));
-        }
-
-        auto flag = this.getFlagByName(name);
-        if (!flag.isNull) {
-            throw new InvalidProgramException(
-                "duplicate name %s which is already used by a flag".format(name)
-            );
-        }
-
-        auto option = this.getOptionByName(name);
-        if (!option.isNull) {
-            throw new InvalidProgramException(
-                "duplicate name %s which is already used by an option".format(name)
-            );
-        }
-
-        auto arg = this.getArgumentByName(name);
-        if (!arg.isNull) {
-            throw new InvalidProgramException(
-                "duplicate name %s which is already used by an argument".format(name)
-            );
-        }
-    }
-
-    private void validateAbbrev(string abbrev) pure @safe {
-        if (!abbrev) {
-            return;
-        }
-
-        auto flag = this.getFlagByShort(abbrev);
-        if (!flag.isNull) {
-            throw new InvalidProgramException(
-                "duplicate abbrevation -%s, flag %s already uses it".format(abbrev, flag.get().name)
-            );
-        }
-
-        auto option = this.getOptionByShort(abbrev);
-        if (!option.isNull) {
-            throw new InvalidProgramException(
-                "duplicate abbrevation -%s, option %s already uses it".format(abbrev, option.get().name)
-            );
-        }
-    }
-
-    private void validateFull(string full) pure @safe {
-        if (!full) {
-            return;
-        }
-
-        auto flag = this.getFlagByFull(full);
-        if (!flag.isNull) {
-            throw new InvalidProgramException(
-                "duplicate -%s, flag %s with this already exists".format(full, flag.get().name)
-            );
-        }
-
-        auto option = this.getOptionByFull(full);
-        if (!option.isNull) {
-            throw new InvalidProgramException(
-                "duplicate --%s, option %s with this already exists".format(full, option.get().name)
-            );
-        }
-    }
-
+    /**
+     * Gets command chain.
+     *
+     * Chain is a array of strings which contains all parent command names.
+     * For a deeply nested sub command like `git branch add`, `add` sub-command
+     * chain would return `["git", "branch", "add"]`.
+     */
     public string[] chain() pure nothrow @safe {
         string[] chain = [this.name];
         Command curr = this._parent;
@@ -255,12 +282,85 @@ class Command {
     private void addBasicOptions() {
         this.add(new Flag(null, "version", "prints version"));
     }
+
+    private void validateName(string name) pure @safe {
+        if (!name) {
+            throw new InvalidProgramException("name cannot be empty");
+        }
+
+        if (!name.all!(c => isAlphaNum(c) || c == '_')()) {
+            throw new InvalidProgramException("invalid name '%s' passed".format(name));
+        }
+
+        auto entryPtr = name in _nameMap;
+        if (entryPtr !is null) {
+            throw new InvalidProgramException(
+                "duplicate name %s which is already used".format(name)
+            );
+        }
+    }
+
+    private void validateOption(IOption option) pure @safe {
+        if (!option.abbrev && !option.full) {
+            throw new InvalidProgramException(
+                "option/flag %s must have either long or short form".format(option.name)
+            );
+        }
+
+        if (option.abbrev) {
+            auto flag = this.getFlagByShort(option.abbrev);
+            if (!flag.isNull) {
+                throw new InvalidProgramException(
+                    "duplicate abbrevation -%s, flag %s already uses it".format(option.abbrev, flag.get().name)
+                );
+            }
+
+            auto other = this.getOptionByShort(option.abbrev);
+            if (!other.isNull) {
+                throw new InvalidProgramException(
+                    "duplicate abbrevation -%s, option %s already uses it".format(option.abbrev, other.get().name)
+                );
+            }
+        }
+
+        if (option.full) {
+            auto flag = this.getFlagByFull(option.full);
+            if (!flag.isNull) {
+                throw new InvalidProgramException(
+                    "duplicate -%s, flag %s with this already exists".format(option.full, flag.get().name)
+                );
+            }
+
+            auto other = this.getOptionByFull(option.full);
+            if (!other.isNull) {
+                throw new InvalidProgramException(
+                    "duplicate --%s, option %s with this already exists".format(option.full, other.get().name)
+                );
+            }
+        }
+
+        if (option.isRequired && option.defaultValue) {
+            throw new InvalidProgramException("cannot have required option with default value");
+        }
+    }
 }
 
-class Program: Command {
+/**
+ * Represents program.
+ *
+ * This is the entry-point for building your program model.
+ */
+public class Program: Command {
     private string _binaryName;
     private string[] _authors;
 
+    /**
+     * Creates new instance of `Program`.
+     *
+     * Params:
+     *   name - Program name
+     *   version_ - Program version
+     */
     public this(string name, string version_ = "1.0") {
         super(name, null, version_);
         this.addBasicOptions();
@@ -273,28 +373,49 @@ class Program: Command {
         return cast(Program)super.name(name);
     }
 
+    /**
+     * Program name
+     */
     public override string name() const nothrow pure @nogc @safe {
         return this._name;
     }
 
+    /**
+     * Sets program version
+     */
     public override typeof(this) version_(string version_) nothrow pure @nogc @safe {
         return cast(Program)super.version_(version_);
     }
 
+    /**
+     * Program version
+     */
     public override string version_() const nothrow pure @nogc @safe {
         return this._version;
     }
 
+    /**
+     * Sets program summary (one-liner)
+     */
     public override typeof(this) summary(string summary) nothrow pure @nogc @safe {
         return cast(Program)super.summary(summary);
     }
 
+    /**
+     * Program summary (one-liner)
+     */
     public override string summary() nothrow pure @nogc @safe {
         return this._summary;
     }
 
-    public typeof(this) add(T)(T data) pure @safe {
+    /// Proxy call to `Command.add` returning `Program`.
+    public typeof(this) add(T: IEntry)(T data) pure @safe {
         super.add(data);
+        return this;
+    }
+
+    public override typeof(this) add(Command command) pure @safe {
+        super.add(command);
         return this;
     }
 
@@ -522,14 +643,29 @@ unittest {
     );
 }
 
+// repeating
 unittest {
     import std.exception : assertThrown;
 
-    // repating
     assertThrown!InvalidProgramException(
         new Program("test")
             .add(new Argument("file", "path").repeating)
             .add(new Argument("dir", "desc"))
+    );
+}
+
+// invalid option
+unittest {
+    import std.exception : assertThrown;
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Flag(null, null, ""))
+    );
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Option(null, null, ""))
     );
 }
 
@@ -539,8 +675,8 @@ unittest {
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(new Argument("file", "path"))
-            .add(new Argument("dir", "desc").required)
+            .add(new Argument("file", "path").optional)
+            .add(new Argument("dir", "desc"))
     );
 }
 
@@ -550,11 +686,23 @@ unittest {
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(new Option("d", "dir", "desc").required.defaultValue("test"))
+            .add(new Option("d", "dir", "desc").defaultValue("test").required)
     );
 
     assertThrown!InvalidProgramException(
         new Program("test")
-            .add(new Argument("dir", "desc").required.defaultValue("test"))
+            .add(new Argument("dir", "desc").defaultValue("test").required)
+    );
+}
+
+// flags
+unittest {
+    import std.exception : assertThrown;
+    import commandr.validators;
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Flag("a", "bb", "desc")
+                .acceptsValues(["a"]))
     );
 }

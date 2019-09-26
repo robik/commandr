@@ -1,23 +1,24 @@
 module commandr.option;
 
 import commandr.validators;
+import commandr.program : InvalidProgramException;
 
 
 interface IEntry {
-    public typeof(this) name(string name) pure nothrow @safe @nogc;
-    public string name() const pure nothrow @safe @nogc;
+    public typeof(this) name(string name) pure @safe;
+    public string name() const pure nothrow @safe;
 
-    public typeof(this) description(string description) pure nothrow @safe @nogc;
+    public typeof(this) description(string description) pure @safe;
     public string description() const pure nothrow @safe @nogc;
 
-    public typeof(this) repeating(bool repeating = true) pure nothrow @safe @nogc;
+    public typeof(this) repeating(bool repeating = true) pure @safe;
     public bool isRepeating() const pure nothrow @safe @nogc;
 
-    public typeof(this) required(bool required = true) pure nothrow @safe @nogc;
-    public typeof(this) optional(bool optional = true) pure nothrow @safe @nogc;
+    public typeof(this) required(bool required = true) pure @safe;
+    public typeof(this) optional(bool optional = true) pure @safe;
     public bool isRequired() const pure nothrow @safe @nogc;
 
-    public typeof(this) defaultValue(string defaultValue) pure nothrow @safe @nogc;
+    public typeof(this) defaultValue(string defaultValue) pure @safe;
     public string defaultValue() const pure nothrow @safe @nogc;
 
     public typeof(this) validate(IValidator validator) pure @safe;
@@ -60,13 +61,14 @@ mixin template EntryImpl() {
         return this._repeating;
     }
 
-    public typeof(this) required(bool required = true) pure nothrow @safe @nogc {
+    public typeof(this) required(bool required = true) pure @safe {
         this._required = required;
+
         return this;
     }
 
-    public typeof(this) optional(bool optional = true) pure nothrow @safe @nogc {
-        this._required = !optional;
+    public typeof(this) optional(bool optional = true) pure @safe {
+        this.required(!optional);
         return this;
     }
 
@@ -74,8 +76,9 @@ mixin template EntryImpl() {
         return this._required;
     }
 
-    public typeof(this) defaultValue(string defaultValue) pure nothrow @safe @nogc {
+    public typeof(this) defaultValue(string defaultValue) pure @safe {
         this._default = defaultValue;
+        this._required = false;
         return this;
     }
 
@@ -93,7 +96,7 @@ mixin template EntryImpl() {
     }
 }
 
-interface IOption {
+interface IOption: IEntry {
     public typeof(this) full(string full) pure nothrow @safe @nogc;
     public string full() const pure nothrow @safe @nogc;
 
@@ -131,7 +134,7 @@ mixin template OptionImpl() {
 }
 
 
-class Flag: IEntry, IOption {
+class Flag: IOption {
     mixin EntryImpl;
     mixin OptionImpl;
 
@@ -148,7 +151,7 @@ class Flag: IEntry, IOption {
     }
 }
 
-class Option: IEntry, IOption {
+class Option: IOption {
     mixin OptionImpl;
     mixin EntryImpl;
 
@@ -179,9 +182,10 @@ class Option: IEntry, IOption {
 class Argument: IEntry {
     mixin EntryImpl;
 
-    this(string name, string description = null) {
+    this(string name, string description = null) nothrow pure @safe @nogc {
         this._name = name;
         this._description = description;
+        this._required = true;
     }
 }
 
@@ -189,4 +193,14 @@ class InvalidArgumentsException: Exception {
     this(string msg) nothrow pure @safe @nogc {
         super(msg);
     }
+}
+
+// options
+unittest {
+    assert(!new Option("t", "test", "").isRequired);
+}
+
+// arguments
+unittest {
+    assert(new Argument("test", "").isRequired);
 }

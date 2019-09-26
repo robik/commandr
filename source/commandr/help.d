@@ -11,6 +11,7 @@ import std.range : chain, empty, padRight;
 
 struct HelpOutput {
     bool colors;
+    bool compact = false;
     int indent = 20;
 }
 

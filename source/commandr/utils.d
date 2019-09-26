@@ -27,18 +27,6 @@ unittest {
     assert(wrapped.get() == "test");
 }
 
-Nullable!Argument getArgumentByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.arguments.find!(o => o.name == name).wrapIntoNullable;
-}
-
-Nullable!Option getOptionByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.options.find!(o => o.name == name).wrapIntoNullable;
-}
-
-Nullable!Flag getFlagByName(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.flags.find!(o => o.name == name).wrapIntoNullable;
-}
-
 Nullable!Option getOptionByFull(T)(T aggregate, string name) nothrow pure @safe @nogc {
     return aggregate.options.find!(o => o.full == name).wrapIntoNullable;
 }

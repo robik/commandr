@@ -1,3 +1,6 @@
+/**
+ * Argument parsing functionality
+ */
 module commandr.parser;
 
 import commandr.program;
@@ -14,6 +17,26 @@ import std.typecons : Tuple;
 private import core.stdc.stdlib;
 
 
+/**
+ * Parses program arguments.
+ *
+ * Returns instance of `ProgramArgs`, which allows working on parsed data.
+ *
+ * On top of parsing arguments, this function catches `InvalidArgumentsException`, 
+ * handles `--version` and `--help` flags as well as `help` subcommand.
+ * Exception is handled by printing out the error message along with program usage information
+ * and exiting.
+ *
+ * Version and help is handled by prining out information and exiting.
+ *
+ * If you want to only parse argument without additional handling, see `parseArgs`.
+ *
+ * Similarly to `parseArgs`, `args` array is taken by reference, after call it points to first
+ * not-parsed argument (after `--`).
+ *
+ * See_Also:
+ *   `parseArgs`
+ */
 public ProgramArgs parse(Program program, ref string[] args) {
     try {
         auto res = parseArgs(program, args);
@@ -21,7 +44,7 @@ public ProgramArgs parse(Program program, ref string[] args) {
         if (res.flag("version")) {
             writeln(program.version_);
             exit(0);
-        assert(0);
+            assert(0);
         }
 
         return res;
@@ -36,23 +59,40 @@ public ProgramArgs parse(Program program, ref string[] args) {
 
 /**
  * Parses args.
+ *
+ * Returns instance of `ProgramArgs`, which allows working on parsed data.
+ *
+ * Program model by default adds version flag and help flags and subcommand which need to be
+ * handled by the caller. If you want to have the default behavior, use `parse` which handles
+ * above flags.
+ *
+ * `args` array is taken by reference, after call it points to first not-parsed argument (after `--`).
+ *
+ * Throws:
+ *   InvalidArgumentException
+ *
+ * See_Also:
+ *   `parse`
  */
 public ProgramArgs parseArgs(Program program, ref string[] args) {
+    args = args[1..$];
     return program.parseArgs(args, new ProgramArgs());
 }
 
 private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs init) {
     ProgramArgs result = init;
     result.name = program.name;
-
+    bool isBreak = false;
     size_t argIndex = 0;
-    int i;
-    for (i = 1; i < args.length; ++i) {
-        string arg = args[i];
-        bool hasNext = i + 1 < args.length;
+
+    while (args.length) {
+        string arg = args[0];
+        args = args[1..$];  
+        bool hasNext = args.length > 0;
 
         // end of args
         if (arg == "--") {
+            isBreak = true;
             break;
         }
         // option/flag
@@ -102,7 +142,8 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
                 if (!hasNext) {
                     throw new InvalidArgumentsException("option %s is missing value".format(raw.name));
                 }
-                auto next = args[++i];
+                auto next = args[0];
+                args = args[1..$];
                 if (next.startsWith("-")) {
                     throw new InvalidArgumentsException("option %s is missing value (if value starts with \'-\' character, prefix it with '\\')".format(raw.name));
                 }
@@ -111,21 +152,29 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
             result._options.setOrAppend(option.get().name, raw.value);
         }
         // argument
-        else {
-            if (argIndex >= program.arguments.length) {
-                break;
-            }
-
+        else if (argIndex < program.arguments.length) {
             Argument argument = program.arguments[argIndex];
             if (!argument.isRepeating) {
                 argIndex += 1;
             }
             result._args.setOrAppend(argument.name, arg);
         }
-    }
+        // command
+        else {
+            if (program.commands.empty) {
+                throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(arg));
+            }
+            else {
+                if ((arg in program.commands) is null) {
+                    throw new InvalidArgumentsException("invalid command %s".format(arg));
+                }
 
-    // shift arguments
-    args = args[i..$];
+                result._command = program.commands[arg].parseArgs(args, result.copy());
+                result._command._parent = result;
+                break;
+            }
+        }
+    }
 
     // fill defaults (before required)
     foreach(option; program.options) {
@@ -142,7 +191,6 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
 
     if (result.flag("help")) {
         program.printHelp();
-        import core.stdc.stdlib;
         exit(0);
     }
 
@@ -164,23 +212,8 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
         }
     }
 
-    if (args.empty) {
-        if (!program.commands.empty) {
-            throw new InvalidArgumentsException("missing required subcommand");
-        }
-    }
-    else {
-        if (program.commands.empty) {
-            throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(args[0]));
-        }
-        else {
-            if ((args[0] in program.commands) is null) {
-                throw new InvalidArgumentsException("invalid command %s".format(args[0]));
-            }
-
-            result._command = program.commands[args[0]].parseArgs(args, result.copy());
-            result._command._parent = result;
-        }
+    if (result.command is null && !program.commands.empty) {
+        throw new InvalidArgumentsException("missing required subcommand");
     }
 
     foreach (option; program.options) {
@@ -376,7 +409,7 @@ unittest {
     ProgramArgs a;
 
     a = new Program("test")
-            .add(new Argument("test", ""))
+            .add(new Argument("test", "").optional)
             .parseArgsNoRef(["test"]);
     assert(a.occurencesOf("test") == 0);
     
@@ -458,13 +491,84 @@ unittest {
 
     a = new Program("test")
             .add(new Argument("test", "")
+                .optional
                 .defaultValue("reee"))
             .parseArgsNoRef(["test"]);
     assert(a.arg("test") == "reee");
 
     a = new Program("test")
             .add(new Argument("test", "")
+                .optional
                 .defaultValue("reee"))
             .parseArgsNoRef(["test", "bar"]);
     assert(a.args("test") == ["bar"]);
+}
+
+// rest
+unittest {
+    ProgramArgs a;
+    auto args = ["test", "--", "bar"];
+    a = new Program("test")
+            .add(new Argument("test", "")
+                .optional
+                .defaultValue("reee"))
+            .parseArgs(args);
+    assert(a.args("test") == ["reee"]);
+    assert(args == ["bar"]);
+}
+
+// subcommands
+unittest {
+    import std.exception : assertThrown;
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Argument("test", "").defaultValue("test"))
+            .add(new Command("a"))
+            .add(new Command("b"))
+    );
+
+    assertThrown!InvalidArgumentsException(
+        new Program("test")
+            .add(new Argument("test", ""))
+            .add(new Command("a"))
+            .add(new Command("b")
+                .add(new Command("c")))
+            .parseArgsNoRef(["test", "cccc", "a", "c"])
+    );
+
+    ProgramArgs a;
+    a = new Program("test")
+            .add(new Argument("test", ""))
+            .add(new Command("a"))
+            .add(new Command("b")
+                .add(new Command("c")))
+            .parseArgsNoRef(["test", "cccc", "b", "c"]);
+    assert(a.args("test") == ["cccc"]);
+    assert(a.command !is null);
+    assert(a.command.name == "b");
+    assert(a.command.command !is null);
+    assert(a.command.command.name == "c");
+
+
+    auto args = ["test", "cccc", "a", "--", "c"];
+    a = new Program("test")
+            .add(new Argument("test", ""))
+            .add(new Command("a"))
+            .add(new Command("b")
+                .add(new Command("c")))
+            .parseArgs(args);
+    assert(a.args("test") == ["cccc"]);
+    assert(a.command !is null);
+    assert(a.command.name == "a");
+    assert(args == ["c"]);
+
+    assertThrown!InvalidArgumentsException(
+        new Program("test")
+            .add(new Argument("test", ""))
+            .add(new Command("a"))
+            .add(new Command("b")
+                .add(new Command("c")))
+            .parseArgsNoRef(["test", "cccc", "b", "--", "c"])
+    );
 }
