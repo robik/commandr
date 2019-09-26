@@ -3,7 +3,7 @@
 	"authors": [
 		"Robert Pasiński"
 	],
-	"description": "Command Line Arguments parser for modern age",
+	"description": "Modern command line argument parser",
 	"copyright": "Copyright © 2019, Robert Pasiński",
 	"license": "MIT"
 }

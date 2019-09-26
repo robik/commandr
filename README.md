@@ -82,7 +82,7 @@ Add this entry to your `dub.json` file:
    - Infinitely recursive subcommands (you can go as deep as needed)
    - Contains own set of flags/options and arguments
    - Dedicated help output
-   - Comfortable command handling with `ProgramArgs.on`
+   - Comfortable command handling with `ProgramArgs.on()`
 
  - **Provided help output**
    - Generated help output for your program and sub-commands
@@ -96,12 +96,13 @@ Add this entry to your `dub.json` file:
    - Detects required parameters with default value.
 
  - **BASH auto-complete script**
-   - You can generate completion script automatically
+   - You can generate completion script with single function call
    - Completion script works on flags, options and sub-commands (at any depth)
    - Acknowledges difference between flags and options
 
  - **Validators**
-   - 
+   - Passed values can be checked for correctness
+   - Simple process of creating custom validating logic
 
 
 ## Getting Started
@@ -129,7 +130,7 @@ void main(string[] args) {
 }
 ```
 
-## Configuration
+### Configuration
 
 ## Roadmap
 
@@ -137,6 +138,7 @@ See the [open issues](https://github.com/robik/commandr/issues) for a list of pr
 
 Planned features:
 
+- TODO: default command
 - TODO: aliases
 - TODO: completion tests
 - TODO: help subcommand
@@ -149,7 +151,7 @@ Planned features:
 - TODO: suggestions
 - TODO: environment variables?
 - TODO: help output grouping
-- TODO: better help configuration and output
+- TODO: better help configuration and output (compact, smart newline)
 - TODO: strict (repeating checks; options all on single is error and - option on repeating is error)
 - TODO: more help customisable sections
 - TODO: better print of subcommands (parent required options and args)

@@ -1,0 +1,10 @@
+language: d
+
+matrix:
+  include:
+    - d: dmd-beta
+    - d: dmd
+    - d: gdc
+    - d: ldc
+
+sudo: false
