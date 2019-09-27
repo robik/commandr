@@ -79,7 +79,7 @@ __function_exists() {
 
     builder ~= "complete -F _%s_completion_main %s\n".format(program.binaryName, program.binaryName);
 
-    return builder[];
+    return builder.data;
 }
 
 private void completionFunc(Command command, Appender!string builder) {
