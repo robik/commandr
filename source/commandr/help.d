@@ -11,7 +11,7 @@ import std.range : chain, empty, padRight;
 
 struct HelpOutput {
     bool colors;
-    bool compact = false;
+    // bool compact = false;
     int indent = 20;
 }
 
@@ -64,7 +64,7 @@ void printHelp(T)(T program) {
 }
 
 void printUsage(Program program) {
-    string optionsUsage = "[options]";    
+    string optionsUsage = "[options]";
     if (program.options.length + program.flags.length <= 8) {
         optionsUsage = chain(
             program.flags.map!optionUsage,
@@ -77,16 +77,16 @@ void printUsage(Program program) {
     );
     string args = program.arguments.map!(argUsage).join(" ");
 
-    writefln("%s %s %s%s", 
-        program.binaryName, 
-        optionsUsage, 
+    writefln("%s %s %s%s",
+        program.binaryName,
+        optionsUsage,
         args.empty ? "" : args ~ " ",
         commands
     );
 }
 
 void printUsage(Command command) {
-    string optionsUsage = "[options]";    
+    string optionsUsage = "[options]";
     if (command.options.length + command.flags.length <= 8) {
         optionsUsage = chain(
             command.flags.map!optionUsage,
@@ -99,9 +99,9 @@ void printUsage(Command command) {
     );
     string args = command.arguments.map!(argUsage).join(" ");
 
-    writefln("%s %s %s%s", 
-        command.chain.join(" "),
-        optionsUsage, 
+    writefln("%s %s %s%s",
+        usageChain(command),
+        optionsUsage,
         args.empty ? "" : args ~ " ",
         commands
     );
@@ -124,6 +124,33 @@ private void printHelp(Argument arg) {
     writefln("  %-26s  \033[2m%s\033[0m", arg.name, arg.description);
 }
 
+private string usageChain(Command target) {
+    Command[] commands = [];
+    Command dest = target.parent;
+    while (dest !is null) {
+        commands ~= dest;
+        dest = dest.parent;
+    }
+
+    string[] elements;
+
+    foreach_reverse(command; commands) {
+        elements ~= command.name;
+
+        foreach (opt; command.options.filter!(o => o.isRequired)) {
+            elements ~= optionUsage(opt);
+        }
+
+        foreach (arg; command.arguments.filter!(o => o.isRequired)) {
+            elements ~= argUsage(arg);
+        }
+    }
+
+    elements ~= target.name;
+
+    return elements.join(" ");
+}
+
 private string optionNames(T)(T o) {
     string names = "";
 
@@ -144,7 +171,7 @@ private string optionNames(T)(T o) {
     return names;
 }
 
-private string optionUsage(T)(T o) {
+private string optionUsage(IOption o) {
     string result;
 
     if (o.abbrev) {
@@ -154,14 +181,14 @@ private string optionUsage(T)(T o) {
         result = "--%s".format(o.full);
     }
 
-    static if (is(T == Option)) {
-        if (!o.isRequired) {
-            result = "[%s \033[4m%s\033[0m]".format(result, o.tag);
-        }
+    if (cast(Option)o) {
+        result = "%s \033[4m%s\033[0m".format(result, (cast(Option)o).tag);
     }
-    else {
+
+    if (!o.isRequired) {
         result = "[%s]".format(result);
     }
+
     return result;
 }
 

@@ -1,10 +1,10 @@
 <!-- LOGO -->
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/robik/commandr">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">commandr</h3>
+  <h2 align="center">commandr</h2>
 
   <p align="center">
     A modern, powerful commmand line argument parser. 
@@ -19,8 +19,11 @@
     <a href="https://github.com/robik/commandr/issues">💡 Request feature</a>    
     <br />  
     <br />
+    <img src="https://img.shields.io/travis/robik/commandr?style=flat-square">
+    <img src="https://img.shields.io/dub/v/commandr?style=flat-square">
     <img src="https://img.shields.io/github/issues/robik/commandr.svg?style=flat-square">
     <img src="https://img.shields.io/github/license/robik/commandr.svg?style=flat-square">
+    <img src="https://img.shields.io/badge/language-D-red?style=flat-square">
     <br />
   </p>
 </p>
@@ -35,6 +38,7 @@ Comes with help generation, shell auto-complete scripts and validation.
 
  - [Example](#example)
  - [Installation](#installation)
+ - [FAQ](#faq)
  - [Features](#features)
  - [Getting Started](#getting-started)
    - [Usage](#usage)
@@ -59,6 +63,23 @@ Add this entry to your `dub.json` file:
   }
 ```
 
+## FAQ
+
+ - **Does it use templates/compile-time magic?**
+   
+   No, at least currently not. Right now everything is done at runtime, so there's not much overhead on compilation time resources.
+   In the future I'll probably look into generation of compile-time struct.
+
+   The reason is that I want it to be rather simple and easy to learn, and having a lot of generated code hurts e.g. generated documentation
+   and some minor things such as IDE auto-complete (even right now mixin-s cause some problems).
+
+ - **Are the results typesafe?/Does it use UDA?**
+
+   No, parsed arguments are returned in a `ProgramArgs` class instance that allow to fetch parsed data,
+
+   However it should be possible to generate program definition from struct/class with UDA and then 
+   fill the parsed data into struct instance, but it is currently out of scope of this project (at least for now).
+
 
 ## Features
 
@@ -74,7 +95,7 @@ Add this entry to your `dub.json` file:
    - Options be marked as required.
 
  - **Arguments** (positional)
-   - Can be marked as required
+   - Required by default, can be marked as optional
    - Default values can be specified.
    - Repeated options are supported (only last argument)
 
@@ -103,6 +124,7 @@ Add this entry to your `dub.json` file:
  - **Validators**
    - Passed values can be checked for correctness
    - Simple process of creating custom validating logic
+   - Provided validators for common cases: `EnumValidator`, `FileSystemValidator` and `DelegateValidator`
 
 
 ## Getting Started
@@ -121,8 +143,7 @@ void main(string[] args) {
               .name("verbose")
               .repeating)
           .add(new Option(null, "test", "some teeeest"))
-          .add(new Argument("path", "Path to file to edit")
-              .required)
+          .add(new Argument("path", "Path to file to edit"))
           .parse(args);
 
       writeln("verbosity level", a.occurencesOf("verbose"));
@@ -135,23 +156,3 @@ void main(string[] args) {
 ## Roadmap
 
 See the [open issues](https://github.com/robik/commandr/issues) for a list of proposed features (and known issues).
-
-Planned features:
-
-- TODO: default command
-- TODO: aliases
-- TODO: completion tests
-- TODO: help subcommand
-- TODO: Combined options `-qLop` (makes `-option` behind switch)
-- TODO: conflicts
-- TODO: programargs hierarchy conflicts
-- TODO: allocator support
-- TODO: With negative value (`no-` prefix)
-- TODO: hinting (for completion)
-- TODO: suggestions
-- TODO: environment variables?
-- TODO: help output grouping
-- TODO: better help configuration and output (compact, smart newline)
-- TODO: strict (repeating checks; options all on single is error and - option on repeating is error)
-- TODO: more help customisable sections
-- TODO: better print of subcommands (parent required options and args)

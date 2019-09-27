@@ -70,6 +70,7 @@ public class Command {
     private Argument[] _arguments;
     private Command[string] _commands;
     private Command _parent;
+    private string _defaultCommand;
 
     /**
      * Creates new instance of Command.
@@ -262,6 +263,27 @@ public class Command {
     }
 
     /**
+     * Sets default command.
+     */
+    public typeof(this) defaultCommand(string name) pure @safe {
+        if (name !is null) {
+            if ((name in _commands) is null) {
+                throw new InvalidProgramException("setting default command to non-existing one");
+            }
+        }
+        this._defaultCommand = name;
+
+        return this;
+    }
+
+    /**
+     * Gets default command
+     */
+    public string defaultCommand() nothrow pure @safe @nogc {
+        return this._defaultCommand;
+    }
+
+    /**
      * Gets command chain.
      *
      * Chain is a array of strings which contains all parent command names.
@@ -277,6 +299,10 @@ public class Command {
         }
 
         return chain.reverse();
+    }
+
+    public Command parent() nothrow pure @safe @nogc {
+        return _parent;
     }
 
     private void addBasicOptions() {
@@ -417,6 +443,15 @@ public class Program: Command {
     public override typeof(this) add(Command command) pure @safe {
         super.add(command);
         return this;
+    }
+
+    public override typeof(this) defaultCommand(string name) pure @safe {
+        super.defaultCommand(name);
+        return this;
+    }
+
+    public override string defaultCommand() nothrow pure @safe @nogc {
+        return this._defaultCommand;
     }
 
     /**
@@ -704,5 +739,41 @@ unittest {
         new Program("test")
             .add(new Flag("a", "bb", "desc")
                 .acceptsValues(["a"]))
+    );
+}
+
+// subcommands
+unittest {
+    import std.exception : assertThrown;
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Argument("test", "").defaultValue("test"))
+            .add(new Command("a"))
+            .add(new Command("b"))
+    );
+}
+
+// default command
+unittest {
+    import std.exception : assertThrown, assertNotThrown;
+    import commandr.validators;
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .defaultCommand("a")
+            .add(new Command("a", "desc"))
+    );
+
+    assertThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Command("a", "desc"))
+            .defaultCommand("b")
+    );
+
+    assertNotThrown!InvalidProgramException(
+        new Program("test")
+            .add(new Command("a", "desc"))
+            .defaultCommand(null)
     );
 }
