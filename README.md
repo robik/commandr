@@ -49,7 +49,9 @@ Comes with help generation, shell auto-complete scripts and validation.
 
 ## Example
 
-![Example Help output](./images/help.png)
+<p align="center">
+<img src="./images/help.png">
+</p>
 
 ## Installation
 
@@ -58,7 +60,7 @@ Add this entry to your `dub.json` file:
 ```json
   "dependencies": {
     ...
-    "commandr": "~>1.0"
+    "commandr": "~>0.1"
     ...
   }
 ```
