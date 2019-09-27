@@ -11,5 +11,5 @@ commandr-test-*
 *.o
 *.obj
 *.lst
-commandr
+/commandr
 source/app.d
