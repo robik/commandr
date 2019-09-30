@@ -36,7 +36,7 @@ Comes with help generation, shell auto-complete scripts and validation.
 
 ## Table of Contents
 
- - [Example](#example)
+ - [Preview](#preview)
  - [Installation](#installation)
  - [FAQ](#faq)
  - [Features](#features)
@@ -47,7 +47,7 @@ Comes with help generation, shell auto-complete scripts and validation.
  - [License](#license)
 
 
-## Example
+## Preview
 
 <p align="center">
 <img src="./images/help.png">
@@ -109,7 +109,7 @@ Add this entry to your `dub.json` file:
 
  - **Provided help output**
    - Generated help output for your program and sub-commands
-   - Can be configured/partially overriden to suit your needs, such as forced disabling of ANSI codes.
+   - Can be configured to suit your needs, such as disabling colored output.
    - Provided usage, help and version information.
    - Completly detached from core `Program`, giving you complete freedom in writing your own help output.
 

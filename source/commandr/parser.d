@@ -201,13 +201,13 @@ private ProgramArgs parseArgs(
     // fill defaults (before required)
     foreach(option; program.options) {
         if (result.option(option.name) is null && option.defaultValue) {
-            result._options[option.name] = [option.defaultValue];
+            result._options[option.name] = option.defaultValue;
         }
     }
 
     foreach(arg; program.arguments) {
         if (result.arg(arg.name) is null && arg.defaultValue) {
-            result._args[arg.name] = [arg.defaultValue];
+            result._args[arg.name] = arg.defaultValue;
         }
     }
 

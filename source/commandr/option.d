@@ -21,7 +21,8 @@ interface IEntry {
     public bool isRequired() const pure nothrow @safe @nogc;
 
     public typeof(this) defaultValue(string defaultValue) pure @safe;
-    public string defaultValue() const pure nothrow @safe @nogc;
+    public typeof(this) defaultValue(string[] defaultValue) pure @safe;
+    public string[] defaultValue() pure nothrow @safe @nogc;
 
     public typeof(this) validate(IValidator validator) pure @safe;
     public IValidator[] validators() pure nothrow @safe @nogc;
@@ -32,7 +33,7 @@ mixin template EntryImpl() {
     private string _description;
     private bool _repeating = false;
     private bool _required = false;
-    private string _default;
+    private string[] _default;
     private IValidator[] _validators;
 
 
@@ -79,12 +80,16 @@ mixin template EntryImpl() {
     }
 
     public typeof(this) defaultValue(string defaultValue) pure @safe {
+        return this.defaultValue([defaultValue]);
+    }
+
+    public typeof(this) defaultValue(string[] defaultValue) pure @safe {
         this._default = defaultValue;
         this._required = false;
         return this;
     }
 
-    public string defaultValue() const pure nothrow @safe @nogc {
+    public string[] defaultValue() pure nothrow @safe @nogc {
         return this._default;
     }
 
