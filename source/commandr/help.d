@@ -2,8 +2,8 @@ module commandr.help;
 
 import commandr.program;
 import commandr.option;
-import std.algorithm : filter, map;
-import std.array : join;
+import std.algorithm : filter, map, any, chunkBy;
+import std.array : join, array;
 import std.conv : to;
 import std.stdio : writefln, writeln, write;
 import std.string : format;
@@ -15,6 +15,10 @@ struct HelpOutput {
     ///
     bool colors = true;
     // bool compact = false;
+
+    ///
+    int maxWidth = 80;
+
     ///
     int indent = 24;
     ///
@@ -82,9 +86,7 @@ struct HelpPrinter {
 
         if (program.commands.length > 0) {
             writefln("%sSUBCOMMANDS%s", ansi("1"), ansi("0"));
-            foreach(key, command; program.commands) {
-                writefln("  %-"~config.indent.to!string~"s  %s%s%s", key, ansi("2"), command.summary, ansi("0"));
-            }
+            printSubcommands(program.commands);
             writeln();
         }
     }
@@ -103,7 +105,7 @@ struct HelpPrinter {
         }
 
         string commands = program.commands.length == 0 ? "" : (
-            program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|")
+            program.commands.length > config.commandLimit ? "COMMAND" : program.commands.keys.join("|")
         );
         string args = program.arguments.map!(a => argUsage(a)).join(" ");
 
@@ -117,15 +119,17 @@ struct HelpPrinter {
 
     void printUsage(Command command) {
         string optionsUsage = "[options]";
-        if (command.options.length + command.flags.length <= 8) {
+        if (command.options.length + command.flags.length <= config.optionsLimit) {
             optionsUsage = chain(
                 command.flags.map!(f => optionUsage(f)),
                 command.options.map!(o => optionUsage(o))
             ).join(" ");
+        } else {
+            optionsUsage ~= " " ~ command.options.filter!(o => o.isRequired).map!(o => optionUsage(o)).join(" ");
         }
 
         string commands = command.commands.length == 0 ? "" : (
-            command.commands.length > 6 ? "command" : command.commands.keys.join("|")
+            command.commands.length > config.commandLimit ? "command" : command.commands.keys.join("|")
         );
         string args = command.arguments.map!(a => argUsage(a)).join(" ");
 
@@ -153,6 +157,28 @@ struct HelpPrinter {
 
     private void printHelp(Argument arg) {
         writefln("  %-"~config.indent.to!string~"s  %s%s%s", arg.tag, ansi("2"), arg.description, ansi("0"));
+    }
+
+    private void printSubcommands(Command[string] commands) {
+        auto grouped = commands.values.chunkBy!(a => a.topic).array;
+
+        if (grouped.length == 1 && grouped[0][0] is null) {
+            foreach(key, command; commands) {
+                writefln("  %-"~config.indent.to!string~"s  %s%s%s", key, ansi("2"), command.summary, ansi("0"));
+            }
+        }
+        else {
+            foreach (entry; grouped) {
+                writefln("  %s%s%s:", ansi("4"), entry[0], ansi("0"));
+                foreach(command; entry[1]) {
+                    writefln(
+                        "    %-"~(config.indent - 2).to!string~"s  %s%s%s",
+                        command.name, ansi("2"), command.summary, ansi("0")
+                    );
+                }
+                writeln();
+            }
+        }
     }
 
     private string usageChain(Command target) {
