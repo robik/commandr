@@ -298,7 +298,8 @@ public class Command {
             curr = curr._parent;
         }
 
-        return chain.reverse();
+        chain.reverse();
+        return chain;
     }
 
     public Command parent() nothrow pure @safe @nogc {

@@ -115,7 +115,7 @@ private void completionFunc(Command command, Appender!string builder) {
     builder ~= "        if [[ \"$curr\" = -* ]]; then\n";
     builder ~= "            COMPREPLY=( $(compgen -W \"%s\" -- \"$curr\") )\n".format(chain(shorts, longs).join(" "));
 
-    if (!command.commands.empty) {
+    if (command.commands.length > 0) {
         builder ~= "        elif [ ${#__args[@]} -ge %s ]; then\n".format(command.arguments.length);
         builder ~= "            COMPREPLY=( $(compgen -W \"%s\" -- \"$curr\") )\n".format(commands);
         builder ~= "        fi\n";

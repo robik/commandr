@@ -159,7 +159,7 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
         }
         // command
         else {
-            if (program.commands.empty) {
+            if (program.commands.length == 0) {
                 throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(arg));
             }
             else {
@@ -228,7 +228,7 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
         }
     }
 
-    if (result.command is null && !program.commands.empty) {
+    if (result.command is null && program.commands.length > 0) {
         if (program.defaultCommand !is null) {
             result._command = program.commands[program.defaultCommand].parseArgs(args, result.copy());
             result._command._parent = result;

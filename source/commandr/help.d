@@ -54,7 +54,7 @@ void printHelp(T)(T program) {
         writeln();
     }
 
-    if (!program.commands.empty) {
+    if (program.commands.length > 0) {
         writefln("%sSUBCOMMANDS%s", ansi("1"), ansi("0"));
         foreach(key, command; program.commands) {
             writefln("  %-28s%s%s%s", key, ansi("2"), command.summary, ansi("0"));
@@ -67,15 +67,15 @@ void printUsage(Program program) {
     string optionsUsage = "[options]";
     if (program.options.length + program.flags.length <= 8) {
         optionsUsage = chain(
-            program.flags.map!optionUsage,
-            program.options.map!optionUsage
+            program.flags.map!(f => optionUsage(f)),
+            program.options.map!(o => optionUsage(o))
         ).join(" ");
     }
 
-    string commands = program.commands.empty ? "" : (
+    string commands = program.commands.length == 0 ? "" : (
         "<%s>".format(program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|"))
     );
-    string args = program.arguments.map!(argUsage).join(" ");
+    string args = program.arguments.map!(a => argUsage(a)).join(" ");
 
     writefln("%s %s %s%s",
         program.binaryName,
@@ -89,15 +89,15 @@ void printUsage(Command command) {
     string optionsUsage = "[options]";
     if (command.options.length + command.flags.length <= 8) {
         optionsUsage = chain(
-            command.flags.map!optionUsage,
-            command.options.map!optionUsage
+            command.flags.map!(f => optionUsage(f)),
+            command.options.map!(o => optionUsage(o))
         ).join(" ");
     }
 
-    string commands = command.commands.empty ? "" : (
+    string commands = command.commands.length == 0 ? "" : (
         "<%s>".format(command.commands.length > 6 ? "COMMAND" : command.commands.keys.join("|"))
     );
-    string args = command.arguments.map!(argUsage).join(" ");
+    string args = command.arguments.map!(a => argUsage(a)).join(" ");
 
     writefln("%s %s %s%s",
         usageChain(command),
