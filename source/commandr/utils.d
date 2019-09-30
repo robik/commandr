@@ -2,8 +2,9 @@ module commandr.utils;
 
 import commandr;
 import std.array : array;
-import std.algorithm : find, map, levenshteinDistance, minIndex;
+import std.algorithm : find, map, levenshteinDistance;
 import std.typecons : Tuple, Nullable;
+import std.range : isInputRange, ElementType;
 
 
 // helpers
@@ -76,4 +77,35 @@ unittest {
     assert (matchingCandidate(["test", "bar"], "tst") == "test");
     assert (matchingCandidate(["test", "bar"], "barr") == "bar");
     assert (matchingCandidate([], "barr") == null);
+}
+
+
+// minIndex is not in GDC (ugh)
+ptrdiff_t minIndex(T)(T range) if(isInputRange!T) {
+    ptrdiff_t index, minIndex;
+    ElementType!T min = ElementType!T.max;
+
+    foreach(el; range) {
+        if (el < min) {
+            min = el;
+            minIndex = index;
+        }
+        index += 1;
+    }
+
+    if (min == ElementType!T.max) {
+        return -1;
+    }
+
+    return minIndex;
+}
+
+unittest {
+    assert([1, 0].minIndex == 1);
+    assert([0, 1, 2].minIndex == 0);
+    assert([2, 1, 2].minIndex == 1);
+    assert([2, 1, 0].minIndex == 2);
+    assert([1, 1, 0].minIndex == 2);
+    assert([0, 1, 0].minIndex == 0);
+    assert((cast(int[])[]).minIndex == -1);
 }
