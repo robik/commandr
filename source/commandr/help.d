@@ -4,9 +4,10 @@ import commandr.program;
 import commandr.option;
 import std.algorithm : filter, map;
 import std.array : join;
+import std.conv : to;
 import std.stdio : writefln, writeln, write;
 import std.string : format;
-import std.range : chain, empty, padRight;
+import std.range : chain, empty;
 
 
 struct HelpOutput {
@@ -116,8 +117,9 @@ private void printHelp(Option option) {
     string left = optionNames(option);
     size_t length = left.length + option.tag.length + 1;
     string formatted = "%s %s%s%s".format(left, ansi("4"), option.tag, ansi("0"));
+    size_t padLength = 26 + (formatted.length - length);
 
-    writefln("  %s  %s%s%s", formatted.padRight(' ', 26 + (formatted.length - length)), ansi("2"), option.description, ansi("0"));
+    writefln("  %-"~padLength.to!string~"s  %s%s%s", formatted, ansi("2"), option.description, ansi("0"));
 }
 
 private void printHelp(Argument arg) {
