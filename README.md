@@ -30,7 +30,7 @@
 
 - - -
 
-**commandr** handles all kinds of command-line arguments with a nice and clean interface.
+**commandr** handles all kinds of command-line arguments with a nice and clean interface.<br/>
 Comes with help generation, shell auto-complete scripts and validation. 
 
 
@@ -75,7 +75,7 @@ Add this entry to your `dub.json` file:
    The reason is that I want it to be rather simple and easy to learn, and having a lot of generated code hurts e.g. generated documentation
    and some minor things such as IDE auto-complete (even right now mixin-s cause some problems).
 
- - **Are the results typesafe?/Does it use UDA?**
+ - **Are the results typesafe? / Does it use UDA?**
 
    No, parsed arguments are returned in a `ProgramArgs` class instance that allow to fetch parsed data,
 
@@ -87,7 +87,7 @@ Add this entry to your `dub.json` file:
 
  - **Flags** (boolean values)
    - Short and long forms are supported (`-v`, `--verbose`)
-   - Supports stacking of flags (`-vvvv` is same as `-v -v -v`)
+   - Supports stacking of flags (`-vvv` is same as `-v -v -v`)
 
  - **Options** (taking a string value)
    - Short and long forms are supported (`-c test`, `--config test`)
