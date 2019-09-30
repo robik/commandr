@@ -17,7 +17,7 @@ struct HelpOutput {
 
 void printHelp(T)(T program) {
     static if (is(T == Program)) {
-        writefln("%s: %s \033[2m(%s)\033[0m", program.name, program.summary, program.version_);
+        writefln("%s: %s %s(%s)%s", program.name, program.summary, ansi("2"), program.version_, ansi("0"));
         writeln();
     }
     else {
@@ -25,13 +25,13 @@ void printHelp(T)(T program) {
         writeln();
     }
 
-    writeln("\033[1mUSAGE\033[0m");
+    writefln("%sUSAGE%s", ansi("1"), ansi("0"));
     write("  $ "); // prefix for usage
     program.printUsage();
     writeln();
 
     if (!program.flags.empty) {
-        writeln("\033[1mFLAGS\033[0m");
+        writefln("%sFLAGS%s", ansi("1"), ansi("0"));
         foreach(flag; program.flags) {
             flag.printHelp();
         }
@@ -39,7 +39,7 @@ void printHelp(T)(T program) {
     }
 
     if (!program.options.empty) {
-        writeln("\033[1mOPTIONS\033[0m");
+        writefln("%sOPTIONS%s", ansi("1"), ansi("0"));
         foreach(option; program.options) {
             option.printHelp();
         }
@@ -47,7 +47,7 @@ void printHelp(T)(T program) {
     }
 
     if (!program.arguments.empty) {
-        writeln("\033[1mARGUMENTS\033[0m");
+        writefln("%sARGUMENTS%s", ansi("1"), ansi("0"));
         foreach(arg; program.arguments) {
             arg.printHelp();
         }
@@ -55,9 +55,9 @@ void printHelp(T)(T program) {
     }
 
     if (!program.commands.empty) {
-        writeln("\033[1mSUBCOMMANDS\033[0m");
+        writefln("%sSUBCOMMANDS%s", ansi("1"), ansi("0"));
         foreach(key, command; program.commands) {
-            writefln("  %-28s\033[2m%s\033[0m", key, command.summary);
+            writefln("  %-28s%s%s%s", key, ansi("2"), command.summary, ansi("0"));
         }
         writeln();
     }
@@ -109,19 +109,19 @@ void printUsage(Command command) {
 
 private void printHelp(Flag flag) {
     string left = optionNames(flag);
-    writefln("  %-26s  \033[2m%s\033[0m", left, flag.description);
+    writefln("  %-26s  %s%s%s", left, ansi("2"), flag.description, ansi("0"));
 }
 
 private void printHelp(Option option) {
     string left = optionNames(option);
     size_t length = left.length + option.tag.length + 1;
-    string formatted = "%s \033[4m%s\033[0m".format(left, option.tag);
+    string formatted = "%s %s%s%s".format(left, ansi("4"), option.tag, ansi("0"));
 
-    writefln("  %s  \033[2m%s\033[0m", formatted.padRight(' ', 26 + (formatted.length - length)), option.description);
+    writefln("  %s  %s%s%s", formatted.padRight(' ', 26 + (formatted.length - length)), ansi("2"), option.description, ansi("0"));
 }
 
 private void printHelp(Argument arg) {
-    writefln("  %-26s  \033[2m%s\033[0m", arg.name, arg.description);
+    writefln("  %-26s  %s%s%s", arg.name, ansi("2"), arg.description, ansi("0"));
 }
 
 private string usageChain(Command target) {
@@ -182,7 +182,7 @@ private string optionUsage(IOption o) {
     }
 
     if (cast(Option)o) {
-        result = "%s \033[4m%s\033[0m".format(result, (cast(Option)o).tag);
+        result = "%s %s%s%s".format(result, ansi("4"), (cast(Option)o).tag, ansi("0"));
     }
 
     if (!o.isRequired) {
@@ -194,4 +194,22 @@ private string optionUsage(IOption o) {
 
 private string argUsage(Argument arg) {
     return (arg.isRequired ? "<%s>" : "[%s]").format(arg.name);
+}
+
+
+private string ansi(string code) {
+    version(Windows) {
+        return "";
+    }
+    version(Posix) {
+        import core.sys.posix.unistd : isatty, STDOUT_FILENO;
+
+        if (isatty(STDOUT_FILENO)) {
+            return "\033[%sm".format(code);
+        }
+
+        return "";
+    }
+
+    assert(0);
 }
