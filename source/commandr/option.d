@@ -8,6 +8,8 @@ interface IEntry {
     public typeof(this) name(string name) pure @safe;
     public string name() const pure nothrow @safe;
 
+    public string displayName() const pure nothrow @safe;
+
     public typeof(this) description(string description) pure @safe;
     public string description() const pure nothrow @safe @nogc;
 
@@ -111,6 +113,13 @@ mixin template OptionImpl() {
     private string _abbrev;
     private string _full;
 
+    public string displayName() const nothrow pure @safe {
+        if (_abbrev) {
+            return "-" ~ _abbrev;
+        }
+        return "--" ~ _full;
+    }
+
     public typeof(this) full(string full) pure nothrow @safe @nogc {
         this._full = full;
         return this;
@@ -182,10 +191,26 @@ class Option: IOption {
 class Argument: IEntry {
     mixin EntryImpl;
 
+    private string _tag;
+
     this(string name, string description = null) nothrow pure @safe @nogc {
         this._name = name;
         this._description = description;
         this._required = true;
+        this._tag = name;
+    }
+
+    public string displayName() const nothrow pure @safe {
+        return this._tag;
+    }
+
+    public typeof(this) tag(string description) pure nothrow @safe @nogc {
+        this._description = description;
+        return this;
+    }
+
+    public string tag() const pure nothrow @safe @nogc {
+        return this._tag;
     }
 }
 

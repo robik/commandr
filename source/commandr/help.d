@@ -10,6 +10,7 @@ import std.string : format;
 import std.range : chain, empty;
 
 
+// TODO
 struct HelpOutput {
     bool colors;
     // bool compact = false;
@@ -66,15 +67,17 @@ void printHelp(T)(T program) {
 
 void printUsage(Program program) {
     string optionsUsage = "[options]";
-    if (program.options.length + program.flags.length <= 8) {
+    if (program.options.length + program.flags.length <= 6) {
         optionsUsage = chain(
             program.flags.map!(f => optionUsage(f)),
             program.options.map!(o => optionUsage(o))
         ).join(" ");
+    } else {
+        optionsUsage ~= " " ~ program.options.filter!(o => o.isRequired).map!(o => optionUsage(o)).join(" ");
     }
 
     string commands = program.commands.length == 0 ? "" : (
-        "<%s>".format(program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|"))
+        program.commands.length > 6 ? "COMMAND" : program.commands.keys.join("|")
     );
     string args = program.arguments.map!(a => argUsage(a)).join(" ");
 
@@ -96,7 +99,7 @@ void printUsage(Command command) {
     }
 
     string commands = command.commands.length == 0 ? "" : (
-        "<%s>".format(command.commands.length > 6 ? "COMMAND" : command.commands.keys.join("|"))
+        command.commands.length > 6 ? "COMMAND" : command.commands.keys.join("|")
     );
     string args = command.arguments.map!(a => argUsage(a)).join(" ");
 
@@ -137,10 +140,10 @@ private string usageChain(Command target) {
     string[] elements;
 
     foreach_reverse(command; commands) {
-        elements ~= command.name;
+        elements ~= ansi("0") ~ command.name ~ ansi("2");
 
         foreach (opt; command.options.filter!(o => o.isRequired)) {
-            elements ~= optionUsage(opt);
+            elements ~= optionUsage(opt) ~ ansi("2");
         }
 
         foreach (arg; command.arguments.filter!(o => o.isRequired)) {
@@ -148,7 +151,7 @@ private string usageChain(Command target) {
         }
     }
 
-    elements ~= target.name;
+    elements ~= ansi("0") ~ target.name;
 
     return elements.join(" ");
 }
@@ -174,14 +177,7 @@ private string optionNames(T)(T o) {
 }
 
 private string optionUsage(IOption o) {
-    string result;
-
-    if (o.abbrev) {
-        result = "-%s".format(o.abbrev);
-    }
-    else {
-        result = "--%s".format(o.full);
-    }
+    string result = o.displayName;
 
     if (cast(Option)o) {
         result = "%s %s%s%s".format(result, ansi("4"), (cast(Option)o).tag, ansi("0"));
@@ -195,7 +191,7 @@ private string optionUsage(IOption o) {
 }
 
 private string argUsage(Argument arg) {
-    return (arg.isRequired ? "<%s>" : "[%s]").format(arg.name);
+    return (arg.isRequired ? "%s" : "[%s]").format(arg.name);
 }
 
 

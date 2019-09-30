@@ -147,14 +147,16 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
             // no value
             if (raw.value is null) {
                 if (!hasNext) {
-                    throw new InvalidArgumentsException("option %s is missing value".format(raw.name));
+                    throw new InvalidArgumentsException(
+                        "option %s%s is missing value".format(isLong ? "--" : "-", raw.name)
+                    );
                 }
                 auto next = args[0];
                 args = args[1..$];
                 if (next.startsWith("-")) {
                     throw new InvalidArgumentsException(
-                        "option %s is missing value (if value starts with \'-\' character, prefix it with '\\')"
-                        .format(raw.name)
+                        "option %s%s is missing value (if value starts with \'-\' character, prefix it with '\\')"
+                        .format(isLong ? "--" : "-", raw.name)
                     );
                 }
                 raw.value = next;
