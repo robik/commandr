@@ -178,8 +178,8 @@ class Option: IOption {
         this._description = description;
     }
 
-    public typeof(this) tag(string description) pure nothrow @safe @nogc {
-        this._description = description;
+    public typeof(this) tag(string tag) pure nothrow @safe @nogc {
+        this._tag = tag;
         return this;
     }
 
@@ -204,8 +204,8 @@ class Argument: IEntry {
         return this._tag;
     }
 
-    public typeof(this) tag(string description) pure nothrow @safe @nogc {
-        this._description = description;
+    public typeof(this) tag(string tag) pure nothrow @safe @nogc {
+        this._tag = tag;
         return this;
     }
 

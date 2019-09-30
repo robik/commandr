@@ -37,9 +37,9 @@ private import core.stdc.stdlib;
  * See_Also:
  *   `parseArgs`
  */
-public ProgramArgs parse(Program program, ref string[] args) {
+public ProgramArgs parse(Program program, ref string[] args, HelpOutput helpConfig = HelpOutput.init) {
     try {
-        auto res = parseArgs(program, args);
+        auto res = parseArgs(program, args, helpConfig);
 
         if (res.flag("version")) {
             writeln(program.version_);
@@ -50,7 +50,7 @@ public ProgramArgs parse(Program program, ref string[] args) {
         return res;
     } catch(InvalidArgumentsException e) {
         stderr.writeln("Error: ", e.msg);
-        program.printUsage();
+        program.printUsage(helpConfig);
         exit(0);
         assert(0);
     }
@@ -74,12 +74,17 @@ public ProgramArgs parse(Program program, ref string[] args) {
  * See_Also:
  *   `parse`
  */
-public ProgramArgs parseArgs(Program program, ref string[] args) {
+public ProgramArgs parseArgs(Program program, ref string[] args, HelpOutput helpConfig = HelpOutput.init) {
     args = args[1..$];
-    return program.parseArgs(args, new ProgramArgs());
+    return program.parseArgs(args, new ProgramArgs(), helpConfig);
 }
 
-private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs init) {
+private ProgramArgs parseArgs(
+    Command program,
+    ref string[] args,
+    ProgramArgs init,
+    HelpOutput helpConfig = HelpOutput.init
+) {
     ProgramArgs result = init;
     result.name = program.name;
     size_t argIndex = 0;
@@ -189,7 +194,7 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
     }
 
     if (result.flag("help")) {
-        program.printHelp();
+        program.printHelp(helpConfig);
         exit(0);
     }
 

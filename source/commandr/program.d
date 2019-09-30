@@ -65,6 +65,8 @@ public class Command {
     private string _name;
     private string _version;
     private string _summary;
+    private string _topic;
+    private string _topicStart;
     private Object[string] _nameMap;
     private Flag[] _flags;
     private Option[] _options;
@@ -250,6 +252,7 @@ public class Command {
             throw new InvalidProgramException("cannot have sub-commands and non-required argument");
         }
 
+        command._topic = this._topicStart;
         command._parent = this;
         _commands[command.name] = command;
 
@@ -282,6 +285,20 @@ public class Command {
      */
     public string defaultCommand() nothrow pure @safe @nogc {
         return this._defaultCommand;
+    }
+
+    public typeof(this) topicGroup(string topic) pure @safe {
+        this._topicStart = topic;
+        return this;
+    }
+
+    public typeof(this) topic(string topic) nothrow pure @safe @nogc {
+        this._topic = topic;
+        return this;
+    }
+
+    public string topic() nothrow pure @safe @nogc {
+        return _topic;
     }
 
     /**
@@ -506,6 +523,20 @@ public class Program: Command {
      */
     public string[] authors() nothrow pure @nogc @safe {
         return this._authors;
+    }
+
+    public override typeof(this) topicGroup(string topic) pure @safe {
+        super.topicGroup(topic);
+        return this;
+    }
+
+    public override typeof(this) topic(string topic) nothrow pure @safe @nogc {
+        super.topic(topic);
+        return this;
+    }
+
+    public override string topic() nothrow pure @safe @nogc {
+        return _topic;
     }
 }
 
@@ -792,4 +823,20 @@ unittest {
             .add(new Command("a", "desc"))
             .defaultCommand(null)
     );
+}
+
+// topics
+unittest {
+    import std.exception : assertThrown, assertNotThrown;
+    import commandr.validators;
+
+    auto p = new Program("test")
+            .add(new Command("a", "desc"))
+            .topic("z")
+            .topicGroup("general purpose")
+            .add(new Command("b", "desc"))
+            ;
+
+    assert(p.topic == "z");
+    assert(p.commands["b"].topic == "general purpose");
 }
