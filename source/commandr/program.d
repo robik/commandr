@@ -31,9 +31,10 @@ module commandr.program;
 
 import commandr.option;
 import commandr.utils;
-import std.algorithm : all, reverse;
+import std.algorithm : all, reverse, map, filter;
 import std.ascii : isAlphaNum;
-import std.range : empty;
+import std.array : array;
+import std.range : empty, chainRanges = chain;
 import std.string : format;
 
 
@@ -304,6 +305,20 @@ public class Command {
 
     public Command parent() nothrow pure @safe @nogc {
         return _parent;
+    }
+
+    public string[] fullNames() nothrow pure @safe {
+        return chainRanges(
+            _flags.map!(f => f.full),
+            _options.map!(o => o.full)
+        ).filter!`a && a.length`.array;
+    }
+
+    public string[] abbrevations() nothrow pure @safe {
+        return chainRanges(
+            _flags.map!(f => f.abbrev),
+            _options.map!(o => o.abbrev)
+        ).filter!`a && a.length`.array;
     }
 
     private void addBasicOptions() {

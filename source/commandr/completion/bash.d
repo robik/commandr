@@ -5,7 +5,7 @@ import commandr.option;
 import std.algorithm : map, filter;
 import std.array : Appender, join;
 import std.string : format;
-import std.range : chain, empty;
+import std.range : empty, chain;
 
 
 /**
@@ -90,15 +90,8 @@ private void completionFunc(Command command, Appender!string builder) {
     auto argumentCount = command.arguments.length;
     auto commands = command.commands.keys.join(" ");
 
-    auto shorts = chain(
-        command.flags.map!(f => f.abbrev),
-        command.options.map!(o => o.abbrev)
-    ).filter!`a && a.length`.map!(s => "-" ~ s);
-
-    auto longs = chain(
-        command.flags.map!(f => f.full),
-        command.options.map!(o => o.full)
-    ).filter!`a && a.length`.map!(l => "--" ~ l);
+    auto shorts = command.abbrevations.map!(s => "-" ~ s);
+    auto longs = command.fullNames.map!(l => "--" ~ l);
 
     auto options = command.options
         .map!(o => [o.abbrev ? "-" ~ o.abbrev : null, o.full ? "--" ~ o.full : null])

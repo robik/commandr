@@ -7,8 +7,8 @@
  * Options and arguments (no flags, as they cannot take value) can have any number of validators attached.
  * Validators are objects that verify user input after parsing values - every validator is run once
  * per option/argument that it is attached to with complete vector of user input (e.g. for repeating values).
- * 
- * Validators are ran in order they are defined aborting on first failure with `ValidationException`. 
+ *
+ * Validators are ran in order they are defined aborting on first failure with `ValidationException`.
  * Exception contains the validator that caused the exception (optionally) along with error message.
  *
  * Validators can be attached using `validate` method, or using helper methods in form of `accepts*`:
@@ -50,7 +50,7 @@
 module commandr.validators;
 
 import commandr.option : IEntry, InvalidArgumentsException;
-import commandr.utils : getEntryKindName;
+import commandr.utils : getEntryKindName, matchingCandidate;
 import std.algorithm : canFind, any, each;
 import std.array : join;
 import std.string : format;
@@ -60,13 +60,13 @@ import std.typecons : Nullable;
 
 /**
  * Validation error.
- * 
- * This exception is thrown when an invalid value has been passed to an option/value 
+ *
+ * This exception is thrown when an invalid value has been passed to an option/value
  * that has validators assigned (manually or through accepts* functions).
  *
  * Exception is thrown on first validator failure. Validators are run in definition order.
  *
- * Because this exception extends `InvalidArgumentsException`, there's no need to 
+ * Because this exception extends `InvalidArgumentsException`, there's no need to
  * catch it explicitly unless needed.
  */
 public class ValidationException: InvalidArgumentsException {
@@ -129,13 +129,22 @@ public class EnumValidator: IValidator {
     }
 
     /// Validates input
-    public void validate(IEntry entry, string[] args) pure @safe {
-        if (args.any!(a => !allowedValues.canFind(a))) {
-            throw new ValidationException(this, 
-                "%s %s must be one of following values: %s".format(
-                    entry.getEntryKindName(), entry.name, allowedValues.join(", ")
-                )
-            );
+    public void validate(IEntry entry, string[] args) @safe {
+        foreach(arg; args) {
+            if (!allowedValues.canFind(arg)) {
+                string suggestion = allowedValues.matchingCandidate(arg);
+                if (suggestion) {
+                    suggestion = " (did you mean %s?)".format(suggestion);
+                } else {
+                    suggestion = "";
+                }
+
+                throw new ValidationException(this,
+                    "%s %s must be one of following values: %s%s".format(
+                        entry.getEntryKindName(), entry.name, allowedValues.join(", "), suggestion
+                    )
+                );
+            }
         }
     }
 }
@@ -180,7 +189,7 @@ public enum FileType {
 
 /**
  * FileSystem validator.
- * 
+ *
  * See_Also:
  *  acceptsFiles, acceptsDirectories, acceptsPath
  */
@@ -207,7 +216,7 @@ public class FileSystemValidator: IValidator {
     /**
      * Creates new FileSystem validator.
      *
-     * This constructor creates a `FileSystemValidator` that checks 
+     * This constructor creates a `FileSystemValidator` that checks
      * whenever the path points to a existing item of specified type.
      *
      * Params:
@@ -236,12 +245,12 @@ public class FileSystemValidator: IValidator {
             return;
         }
 
-        throw new ValidationException(this, 
+        throw new ValidationException(this,
             "%s %s value must point to a %s that %sexists".format(
-                entry.getEntryKindName(), 
-                entry.name, 
-                this.type.isNull 
-                    ? "file/directory" 
+                entry.getEntryKindName(),
+                entry.name,
+                this.type.isNull
+                    ? "file/directory"
                     : this.type.get() == FileType.Directory ? "directory" : "file",
                 exists ? "" : "not "
             )
@@ -252,9 +261,9 @@ public class FileSystemValidator: IValidator {
         switch (type) {
             case FileType.File:
                 if (!arg.isFile) {
-                    throw new ValidationException(this, 
+                    throw new ValidationException(this,
                         "value specified in %s %s must be a valid file".format(
-                            entry.getEntryKindName(), entry.name, 
+                            entry.getEntryKindName(), entry.name,
                         )
                     );
                 }
@@ -262,9 +271,9 @@ public class FileSystemValidator: IValidator {
 
             case FileType.Directory:
                 if (!arg.isDir) {
-                    throw new ValidationException(this, 
+                    throw new ValidationException(this,
                         "value specified in %s %s must be a valid file".format(
-                            entry.getEntryKindName(), entry.name, 
+                            entry.getEntryKindName(), entry.name,
                         )
                     );
                 }
@@ -408,7 +417,7 @@ public class DelegateValidator : IValidator {
  *      .add(new Argument("target", "target to remove")
  *          .validateWith((entry, args) {
  *              foreach (arg; args) {
- *                  // do something 
+ *                  // do something
  *              }
  *          })
  *      )
@@ -458,7 +467,7 @@ public T validateEachWith(T: IEntry)(T entry, void delegate(IEntry, string) vali
  * within option definition chain.
  *
  * This function automatically prepends entry information to your error message,
- * so that call to `new Option("", "foo", "").validateWith(a => a.isDir, "must be a directory")` 
+ * so that call to `new Option("", "foo", "").validateWith(a => a.isDir, "must be a directory")`
  * on failure would throw `ValidationException` with message `option foo must be a directory`.
  *
  * Params:

@@ -132,7 +132,16 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
             // trying to match option
             auto option = isLong ? program.getOptionByFull(raw.name) : program.getOptionByShort(raw.name);
             if (option.isNull) {
-                throw new InvalidArgumentsException("unknown flag/option %s".format(arg));
+                string suggestion = (isLong ? program.fullNames : program.abbrevations).matchingCandidate(raw.name);
+
+                if (suggestion) {
+                    throw new InvalidArgumentsException(
+                        "unknown flag/option %s, did you mean %s%s?".format(arg, isLong ? "--" : "-", suggestion)
+                    );
+                }
+                else {
+                    throw new InvalidArgumentsException("unknown flag/option %s".format(arg));
+                }
             }
 
             // no value
@@ -143,7 +152,10 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
                 auto next = args[0];
                 args = args[1..$];
                 if (next.startsWith("-")) {
-                    throw new InvalidArgumentsException("option %s is missing value (if value starts with \'-\' character, prefix it with '\\')".format(raw.name));
+                    throw new InvalidArgumentsException(
+                        "option %s is missing value (if value starts with \'-\' character, prefix it with '\\')"
+                        .format(raw.name)
+                    );
                 }
                 raw.value = next;
             }
@@ -162,11 +174,11 @@ private ProgramArgs parseArgs(Command program, ref string[] args, ProgramArgs in
             if (program.commands.length == 0) {
                 throw new InvalidArgumentsException("unknown (excessive) parameter %s".format(arg));
             }
+            else if ((arg in program.commands) is null) {
+                string suggestion = program.commands.keys.matchingCandidate(arg);
+                throw new InvalidArgumentsException("unknown command %s, did you mean %s?".format(arg, suggestion));
+            }
             else {
-                if ((arg in program.commands) is null) {
-                    throw new InvalidArgumentsException("invalid command %s".format(arg));
-                }
-
                 result._command = program.commands[arg].parseArgs(args, result.copy());
                 result._command._parent = result;
                 break;

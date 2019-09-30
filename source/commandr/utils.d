@@ -1,7 +1,8 @@
 module commandr.utils;
 
 import commandr;
-import std.algorithm : find;
+import std.array : array;
+import std.algorithm : find, map, levenshteinDistance, minIndex;
 import std.typecons : Tuple, Nullable;
 
 
@@ -58,4 +59,21 @@ string getEntryKindName(IEntry entry) nothrow pure @safe {
     else {
         return null;
     }
+}
+
+string matchingCandidate(string[] values, string current) @safe {
+    auto distances = values.map!(v => levenshteinDistance(v, current));
+
+    immutable long index = distances.minIndex;
+    if (index < 0) {
+        return null;
+    }
+
+    return values[index];
+}
+
+unittest {
+    assert (matchingCandidate(["test", "bar"], "tst") == "test");
+    assert (matchingCandidate(["test", "bar"], "barr") == "bar");
+    assert (matchingCandidate([], "barr") == null);
 }

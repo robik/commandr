@@ -128,6 +128,10 @@ Add this entry to your `dub.json` file:
    - Simple process of creating custom validating logic
    - Provided validators for common cases: `EnumValidator`, `FileSystemValidator` and `DelegateValidator`
 
+ - **Suggestions**
+   - Suggestion with correct flag, option or sub-command name are provided when user specifies invalid value
+   - Also supported for `EnumValidator` (`acceptsValues`)
+
 
 ## Getting Started
 
