@@ -1,5 +1,8 @@
 /**
- * Argument parsing functionality
+ * Argument parsing functionality.
+ *
+ * See_Also:
+ *  parse, parseArgs
  */
 module commandr.parser;
 
@@ -85,6 +88,7 @@ private ProgramArgs parseArgs(
     ProgramArgs init,
     HelpOutput helpConfig = HelpOutput.init
 ) {
+    // TODO: Split
     ProgramArgs result = init;
     result.name = program.name;
     size_t argIndex = 0;
@@ -264,11 +268,11 @@ package ProgramArgs parseArgsNoRef(Program p, string[] args) {
     return p.parseArgs(args);
 }
 
-/// internal type for holding name-value pair
+// internal type for holding name-value pair
 private alias RawOption = Tuple!(string, "name", string, "value");
 
 
-/**
+/*
  * Splits --option=value into a pair of strings on match, otherwise
  * returns a tuple with option name and null.
  */
