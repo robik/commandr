@@ -525,16 +525,25 @@ public class Program: Command {
         return this._authors;
     }
 
+    /**
+     * Sets topic group for the following commands.
+     */
     public override typeof(this) topicGroup(string topic) pure @safe {
         super.topicGroup(topic);
         return this;
     }
 
+    /**
+     * Sets topic group for this command.
+     */
     public override typeof(this) topic(string topic) nothrow pure @safe @nogc {
         super.topic(topic);
         return this;
     }
 
+    /**
+     * Topic group for this command.
+     */
     public override string topic() nothrow pure @safe @nogc {
         return _topic;
     }

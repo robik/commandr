@@ -2,7 +2,7 @@
  * Parsed arguments module.
  *
  * This module contains functionality for handling the parsed command line arguments.
- * 
+ *
  * `ProgramArgs` instance is created and returned by `parse` function. It contains values of flags,
  * options and arguments, which can be read with `.flag`, `.option` and `.arg` functions respectively.
  * Those functions work on _unique names_, not on option full/short names such as `-l` or `--help`.
@@ -32,7 +32,7 @@
  * auto programArgs = program.parse(args);
  * programArgs
  *   .on("branch", (args) {
- *       writeln("verbosity: ", args.flag("verbose"));     
+ *       writeln("verbosity: ", args.flag("verbose"));
  *       args.on("rm", (args) { writeln("removing branch ", args.arg("name")); })
  *           .on("add", (args) { writeln("adding branch", args.arg("name")); })
  *   })
@@ -244,7 +244,18 @@ public class ProgramArgs {
     }
 
     /**
-     * Calls `handler` on `command`.
+     * Calls `handler` if user specified `command` subcommand.
+     *
+     * Example:
+     * ---
+     * auto a = new Program()
+     *      .add(new Command("test"))
+     *      .parse(args);
+     *
+     * a.on("test", (a) {
+     *     writeln("Test!");
+     * });
+     * ---
      */
     public typeof(this) on(string command, scope void delegate(ProgramArgs args) handler) {
         if (_command !is null && _command.name == command) {

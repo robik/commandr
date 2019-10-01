@@ -42,7 +42,13 @@ Comes with help generation, shell auto-complete scripts and validation.
  - [Features](#features)
  - [Getting Started](#getting-started)
    - [Usage](#usage)
+   - [Subcommands](#subcommands)
+   - [Printing help](#printing-help)
    - [Configuration](#configuration)
+ - [Cheat-Sheet](#cheat-sheet)
+   - [Defining Entries](#defining-entries)
+   - [Reading Values](#reading-values)
+   - [Property Matrix](#property-matrix)
  - [Roadmap](#roadmap)
  - [License](#license)
 
@@ -112,6 +118,7 @@ Add this entry to your `dub.json` file:
    - Can be configured to suit your needs, such as disabling colored output.
    - Provided usage, help and version information.
    - Completly detached from core `Program`, giving you complete freedom in writing your own help output.
+   - You can categorize commands for better help output
 
  - **Consistency checking**
    - When you build your program model, `commandr` checks its consistency.
@@ -137,6 +144,8 @@ Add this entry to your `dub.json` file:
 
 ### Usage
 
+Simple example showing how to create a basic program and parse arguments:
+
 ```D
 import std.stdio;
 import commandr;
@@ -157,7 +166,104 @@ void main(string[] args) {
 }
 ```
 
+### Subcommands
+
+You can create subcommands in your program or command using `.add`. You can nest commands.
+
+Adding subcommands adds a virtual required argument at the end to your program. This makes you unable to declare repeating or optional arguments (because you cannot have required argument past these).
+
+Default command can be set with `.defaultCommand(name)` call after defining all commands.
+
+After parsing, every subcommand gets its own `ProgramArgs` instance, forming a hierarchy. Nested args inherit arguments from parent, so that options defined higher
+in hierarchy are copied.
+ProgramArgs defines a helper method `on`, that allows to dispatch method on specified command.
+
+```D
+auto a = new Program("test", "1.0")
+      .add(new Flag("v", null, "turns on more verbose output")
+          .name("verbose")
+          .repeating)
+      .add(new Command("greet")
+          .add(new Argument("name", "name of person to greet")))
+      .add(new Command("farewell")
+          .add(new Argument("name", "name of person to say farewell")))
+      .parse(args);
+
+a.on("greet", (args) {
+  // args.flag("verbose") works
+  writefln("Hello %s!", args.arg("name"));
+}).on("farewell", (args) {
+  writefln("Bye %s!", args.arg("name"));
+});
+
+```
+
+### Printing help
+
+
 ### Configuration
+
+
+## Cheat-Sheet
+
+### Defining entries
+
+Overview of available entries that can be added to program or command with `.add` method:
+
+What         | Type     | Example     | Definition                            
+-------------|----------|-------------|---------------------------------------
+**Flag**     | bool     | `--verbose` | `new Flag(abbrev?, full?, summary?)`  
+**Option**   | string[] | `--db=test` | `new Option(abbrev?, full?, summary?)`
+**Argument** | string[] | `123`       | `new Argument(name, summary?)`        
+
+
+### Reading values
+
+Shows how to access values after parsing args.
+
+Examples assume `args` variable contains result of `parse()` or `parseArgs()` function calls (an instance of `ProgramArgs`)
+
+```D
+ProgramArgs args = program.parse(args);
+```
+
+What         | Type     | Fetch
+-------------|----------|--------------------
+**Flag**     | bool     | `args.flag(name)`
+**Flag**     | int      | `args.occurencesOf(name)`
+**Option**   | string   | `args.option(name)`
+**Option**   | string[] | `args.options(name)`
+**Argument** | string   | `args.arg(name)`
+**Argument** | string[] | `args.args(name)`
+
+
+### Property Matrix
+
+<!-- ✅ ❌ -->
+
+Table below shows which fields exist and which don't (or should not be used).
+
+Column `name` contains name of the method to set the value. All methods return
+`this` to allow chaining.
+
+Name                 | Program | Command | Flag | Option | Argument
+---------------------|---------|---------|------|--------|---------
+`.name`              | ✅      | ✅      | ✅   | ✅     | ✅
+`.version_`          | ✅      | ✅      | ❌   | ️❌     | ❌
+`.summary`           | ✅️      | ️✅      | ❌   | ️❌     | ❌
+`.description`       | ❌      | ️❌      | ✅   | ️✅     | ✅
+`.abbrev`            | ❌      | ❌      | ✅   | ✅     | ❌
+`.full`              | ❌      | ❌      | ✅️   | ️✅     | ❌
+`.tag`               | ❌      | ❌      | ❌   | ️✅     | ✅️
+`.defaultValue`      | ❌      | ❌      | ❌   | ️✅     | ✅️
+`.required`          | ❌      | ❌      | ❌   | ️✅     | ✅️
+`.optional`          | ❌      | ❌      | ❌   | ️✅     | ✅️
+`.repeating`         | ❌      | ❌      | ✅   | ️✅     | ✅️
+`.topic`             | ❌      | ✅      | ❌   | ️❌     | ❌
+`.topicGroup`        | ✅      | ✅      | ❌   | ️❌     | ❌
+`.authors`           | ✅      | ❌      | ❌   | ️❌     | ❌
+`.binaryName`        | ✅      | ❌      | ❌   | ️❌     | ❌
+
 
 ## Roadmap
 
