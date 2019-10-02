@@ -356,4 +356,10 @@ Name                 | Program | Command | Flag | Option | Argument
 
 ## Roadmap
 
+Current major missing features are:
+
+ - Command/Option aliases
+ - Combined short flags/options (e.g. `-qLob`)
+ - EnumValidator/FileSystemValidator auto-completion hinting
+
 See the [open issues](https://github.com/robik/commandr/issues) for a list of proposed features (and known issues).
