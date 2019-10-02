@@ -41,9 +41,11 @@ Comes with help generation, shell auto-complete scripts and validation.
  - [FAQ](#faq)
  - [Features](#features)
  - [Getting Started](#getting-started)
-   - [Usage](#usage)
+   - [Basic usage](#basic-usage)
    - [Subcommands](#subcommands)
+   - [Validation](#validation)
    - [Printing help](#printing-help)
+   - [Bash autocompletion](#bash-autocompletion)
    - [Configuration](#configuration)
  - [Cheat-Sheet](#cheat-sheet)
    - [Defining Entries](#defining-entries)
@@ -142,7 +144,7 @@ Add this entry to your `dub.json` file:
 
 ## Getting Started
 
-### Usage
+### Basic Usage
 
 Simple example showing how to create a basic program and parse arguments:
 
@@ -179,7 +181,7 @@ in hierarchy are copied.
 ProgramArgs defines a helper method `on`, that allows to dispatch method on specified command.
 
 ```D
-auto a = new Program("test", "1.0")
+auto args = new Program("test", "1.0")
       .add(new Flag("v", null, "turns on more verbose output")
           .name("verbose")
           .repeating)
@@ -189,14 +191,71 @@ auto a = new Program("test", "1.0")
           .add(new Argument("name", "name of person to say farewell")))
       .parse(args);
 
-a.on("greet", (args) {
-  // args.flag("verbose") works
-  writefln("Hello %s!", args.arg("name"));
-}).on("farewell", (args) {
-  writefln("Bye %s!", args.arg("name"));
-});
-
+args
+  .on("greet", (args) {
+    // args.flag("verbose") works
+    writefln("Hello %s!", args.arg("name"));
+  })
+  .on("farewell", (args) {
+    writefln("Bye %s!", args.arg("name"));
+  });
 ```
+
+Delegate passed to `on` function receives `ProgramArgs` instance for that subcommand. Because it is also `ProgramArgs`, `on` chain can be nested, as in:
+
+```D
+// assuming program has nested subcommands
+
+a.on("branch", (args) {
+  args
+    .on("add", (args) {
+      writefln("adding branch %s", args.arg("name"));
+    })
+    .on("rm", (args) {
+      writefln("removing branch %s", args.arg("name"));
+    });
+});
+```
+
+### Validation
+
+You can attach one or more validators to options and arguments with `validate` method. Every validator has its own helper function that simplifies adding it do option (usually starting with `accepts`):
+
+```D
+new Program("test")
+  // adding validator manually
+  .add(new Option("s", "scope", "")
+      .validate(new EnumValidator(["local", "global", "system"]))
+  )
+  // helper functionnew Program("test")
+  .add(new Option("s", "scope", "")
+      .acceptsValues(["local", "global", "system"]));
+```
+
+#### Built-in validators
+
+ - **EnumValidator** - Allows to pass values from white-list.
+
+   Helpers: `.acceptsValues(values)`
+
+ - **FileSystemValidator** - Verifies whenever passed values are files/directories or just exist (depending on configuration).
+
+   Helpers: `.acceptsFiles()`, `.acceptsDirectories()`, `.acceptsPaths(bool existing)`
+
+ - **DelegateValidator** - Verifies whenever passed values with user-defined delegate.
+
+   Helpers: `.validateWith(delegate)`, `validateEachWith(delegate)`
+
+
+You can create custom validators either by implementing `IValidator` interface, or by using `DelegateValidator`:
+
+```D
+new Program("test")
+  // adding validator manually
+  .add(new Option("s", "scope", "")
+      .validateEachWith(opt => opt.isDirectory), "must be a valid directory");
+```
+
 
 ### Printing help
 
@@ -217,10 +276,9 @@ helpOptions.optionsLimit = 2;
 program.printHelp(helpOptions);
 ```
 
+### Bash autocompletion
 
-### Bash auto-completion
-
-Commandr can generate BASH autocompletion script. During installation of your program you can copy the generated script to `/etc/bash_completion.d` (or other directory depending on distro).
+Commandr can generate BASH autocompletion script. During installation of your program you can save the generated script to `/etc/bash_completion.d/<programname>.bash` (or any other path depending on distro).
 
 ```D
 import commandr;
