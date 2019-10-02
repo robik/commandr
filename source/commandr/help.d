@@ -17,7 +17,7 @@ struct HelpOutput {
     // bool compact = false;
 
     ///
-    int maxWidth = 80;
+    // int maxWidth = 80;
 
     ///
     int indent = 24;

@@ -434,7 +434,17 @@ public class Argument: IEntry {
     }
 }
 
+/**
+ * Thrown when user-passed data is invalid.
+ *
+ * This exception is thrown during parsing phase when user passed arguments (e.g. invalid option, invalid value).
+ *
+ * This exception is automatically caught if using `parse` function.
+ */
 public class InvalidArgumentsException: Exception {
+    /**
+     * Creates new InvalidArgumentException
+     */
     public this(string msg) nothrow pure @safe @nogc {
         super(msg);
     }

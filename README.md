@@ -200,8 +200,39 @@ a.on("greet", (args) {
 
 ### Printing help
 
+You can print help for program or any subcommand with `printHelp()` function:
+
+```D
+program.printHelp(); // prints program help
+program.commands["test"].printHelp();
+```
+
+To customise help output, pass `HelpOutput` struct instance:
+
+```D
+HelpOutput helpOptions;
+helpOptions.colors = false;
+helpOptions.optionsLimit = 2;
+
+program.printHelp(helpOptions);
+```
+
+
+### Bash auto-completion
+
+Commandr can generate BASH autocompletion script. During installation of your program you can copy the generated script to `/etc/bash_completion.d` (or other directory depending on distro).
+
+```D
+import commandr;
+import commandr.completion.bash;
+
+string script = program.createBashCompletionScript();
+// save script to file
+```
 
 ### Configuration
+
+TODO
 
 
 ## Cheat-Sheet
@@ -239,7 +270,7 @@ What         | Type     | Fetch
 
 ### Property Matrix
 
-<!-- ✅ ❌ -->
+<!-- :heavy_check_mark: ❌ -->
 
 Table below shows which fields exist and which don't (or should not be used).
 
@@ -248,21 +279,21 @@ Column `name` contains name of the method to set the value. All methods return
 
 Name                 | Program | Command | Flag | Option | Argument
 ---------------------|---------|---------|------|--------|---------
-`.name`              | ✅      | ✅      | ✅   | ✅     | ✅
-`.version_`          | ✅      | ✅      | ❌   | ️❌     | ❌
-`.summary`           | ✅️      | ️✅      | ❌   | ️❌     | ❌
-`.description`       | ❌      | ️❌      | ✅   | ️✅     | ✅
-`.abbrev`            | ❌      | ❌      | ✅   | ✅     | ❌
-`.full`              | ❌      | ❌      | ✅️   | ️✅     | ❌
-`.tag`               | ❌      | ❌      | ❌   | ️✅     | ✅️
-`.defaultValue`      | ❌      | ❌      | ❌   | ️✅     | ✅️
-`.required`          | ❌      | ❌      | ❌   | ️✅     | ✅️
-`.optional`          | ❌      | ❌      | ❌   | ️✅     | ✅️
-`.repeating`         | ❌      | ❌      | ✅   | ️✅     | ✅️
-`.topic`             | ❌      | ✅      | ❌   | ️❌     | ❌
-`.topicGroup`        | ✅      | ✅      | ❌   | ️❌     | ❌
-`.authors`           | ✅      | ❌      | ❌   | ️❌     | ❌
-`.binaryName`        | ✅      | ❌      | ❌   | ️❌     | ❌
+`.name`              | :heavy_check_mark:      | :heavy_check_mark:      | :heavy_check_mark:   | :heavy_check_mark:     | :heavy_check_mark:
+`.version_`          | :heavy_check_mark:      | :heavy_check_mark:      | ❌   | ️❌     | ❌
+`.summary`           | :heavy_check_mark:️      | ️:heavy_check_mark:      | ❌   | ️❌     | ❌
+`.description`       | ❌      | ️❌      | :heavy_check_mark:   | ️:heavy_check_mark:     | :heavy_check_mark:
+`.abbrev`            | ❌      | ❌      | :heavy_check_mark:   | :heavy_check_mark:     | ❌
+`.full`              | ❌      | ❌      | :heavy_check_mark:️   | ️:heavy_check_mark:     | ❌
+`.tag`               | ❌      | ❌      | ❌   | ️:heavy_check_mark:     | :heavy_check_mark:️
+`.defaultValue`      | ❌      | ❌      | ❌   | ️:heavy_check_mark:     | :heavy_check_mark:️
+`.required`          | ❌      | ❌      | ❌   | ️:heavy_check_mark:     | :heavy_check_mark:️
+`.optional`          | ❌      | ❌      | ❌   | ️:heavy_check_mark:     | :heavy_check_mark:️
+`.repeating`         | ❌      | ❌      | :heavy_check_mark:   | ️:heavy_check_mark:     | :heavy_check_mark:️
+`.topic`             | ❌      | :heavy_check_mark:      | ❌   | ️❌     | ❌
+`.topicGroup`        | :heavy_check_mark:      | :heavy_check_mark:      | ❌   | ️❌     | ❌
+`.authors`           | :heavy_check_mark:      | ❌      | ❌   | ️❌     | ❌
+`.binaryName`        | :heavy_check_mark:      | ❌      | ❌   | ️❌     | ❌
 
 
 ## Roadmap
