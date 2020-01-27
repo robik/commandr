@@ -42,15 +42,7 @@ private import core.stdc.stdlib;
  */
 public ProgramArgs parse(Program program, ref string[] args, HelpOutput helpConfig = HelpOutput.init) {
     try {
-        auto res = parseArgs(program, args, helpConfig);
-
-        if (res.flag("version")) {
-            writeln(program.version_);
-            exit(0);
-            assert(0);
-        }
-
-        return res;
+        return parseArgs(program, args, helpConfig);
     } catch(InvalidArgumentsException e) {
         stderr.writeln("Error: ", e.msg);
         program.printUsage(helpConfig);
@@ -199,6 +191,11 @@ private ProgramArgs parseArgs(
 
     if (result.flag("help")) {
         program.printHelp(helpConfig);
+        exit(0);
+    }
+
+    if (result.flag("version")) {
+        writeln(program.version_);
         exit(0);
     }
 
