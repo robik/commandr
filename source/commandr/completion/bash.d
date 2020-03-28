@@ -83,8 +83,8 @@ __function_exists() {
 }
 
 private void completionFunc(Command command, Appender!string builder) {
-    foreach(command; command.commands) {
-        completionFunc(command, builder);
+    foreach (cmd; command.commands) {
+        completionFunc(cmd, builder);
     }
 
     auto argumentCount = command.arguments.length;
