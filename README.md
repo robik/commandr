@@ -253,7 +253,8 @@ You can create custom validators either by implementing `IValidator` interface, 
 new Program("test")
   // adding validator manually
   .add(new Option("s", "scope", "")
-      .validateEachWith(opt => opt.isDirectory), "must be a valid directory");
+      .validateEachWith(opt => opt.isDirectory, "must be a valid directory")
+  );
 ```
 
 
