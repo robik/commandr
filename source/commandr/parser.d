@@ -100,7 +100,7 @@ private ProgramArgs parseArgs(
             auto raw = parseRawOption(arg[1 + isLong..$]);
 
             // try matching flag, then fallback to option
-            auto flag = isLong ? program.getFlagByFull(raw.name) : program.getFlagByShort(raw.name);
+            auto flag = isLong ? program.getFlagByFull(raw.name, true) : program.getFlagByShort(raw.name, true);
             int flagValue = 1;
 
             // repeating (-vvvv)
@@ -110,7 +110,7 @@ private ProgramArgs parseArgs(
                 if (!raw.name.canFind!(l => l != letter)) {
                     flagValue = cast(int)raw.name.length;
                     raw.name = raw.name[0..1];
-                    flag = program.getFlagByShort(raw.name);
+                    flag = program.getFlagByShort(raw.name, true);
                 }
             }
 
@@ -131,7 +131,7 @@ private ProgramArgs parseArgs(
             }
 
             // trying to match option
-            auto option = isLong ? program.getOptionByFull(raw.name) : program.getOptionByShort(raw.name);
+            auto option = isLong ? program.getOptionByFull(raw.name, true) : program.getOptionByShort(raw.name, true);
             if (option.isNull) {
                 string suggestion = (isLong ? program.fullNames : program.abbrevations).matchingCandidate(raw.name);
 

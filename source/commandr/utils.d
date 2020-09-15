@@ -29,20 +29,32 @@ unittest {
     assert(wrapped.get() == "test");
 }
 
-Nullable!Option getOptionByFull(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.options.find!(o => o.full == name).wrapIntoNullable;
+Nullable!Option getOptionByFull(T)(T aggregate, string name, bool useDefault = false) nothrow pure @safe {
+    auto ret = aggregate.options.find!(o => o.full == name).wrapIntoNullable;
+    if (ret.isNull && aggregate.defaultCommand !is null && useDefault)
+        ret = aggregate.commands[aggregate.defaultCommand].getOptionByFull(name, useDefault);
+    return ret;
 }
 
-Nullable!Flag getFlagByFull(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.flags.find!(o => o.full == name).wrapIntoNullable;
+Nullable!Flag getFlagByFull(T)(T aggregate, string name, bool useDefault = false) nothrow pure @safe {
+    auto ret = aggregate.flags.find!(o => o.full == name).wrapIntoNullable;
+    if (ret.isNull && aggregate.defaultCommand !is null && useDefault)
+        ret = aggregate.commands[aggregate.defaultCommand].getFlagByFull(name, useDefault);
+    return ret;
 }
 
-Nullable!Option getOptionByShort(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.options.find!(o => o.abbrev == name).wrapIntoNullable;
+Nullable!Option getOptionByShort(T)(T aggregate, string name, bool useDefault = false) nothrow pure @safe {
+    auto ret = aggregate.options.find!(o => o.abbrev == name).wrapIntoNullable;
+    if (ret.isNull && aggregate.defaultCommand !is null && useDefault)
+        ret = aggregate.commands[aggregate.defaultCommand].getOptionByShort(name, useDefault);
+    return ret;
 }
 
-Nullable!Flag getFlagByShort(T)(T aggregate, string name) nothrow pure @safe @nogc {
-    return aggregate.flags.find!(o => o.abbrev == name).wrapIntoNullable;
+Nullable!Flag getFlagByShort(T)(T aggregate, string name, bool useDefault = false) nothrow pure @safe {
+    auto ret = aggregate.flags.find!(o => o.abbrev == name).wrapIntoNullable;
+    if (ret.isNull && aggregate.defaultCommand !is null && useDefault)
+        ret = aggregate.commands[aggregate.defaultCommand].getFlagByShort(name, useDefault);
+    return ret;
 }
 
 string getEntryKindName(IEntry entry) nothrow pure @safe {
