@@ -34,7 +34,6 @@ import commandr.utils;
 import std.algorithm : all, reverse, map, filter;
 import std.ascii : isAlphaNum;
 import std.array : array;
-import std.exception : basicExceptionCtors;
 import std.range : empty, chainRanges = chain;
 import std.string : format;
 
@@ -46,7 +45,9 @@ import std.string : format;
  */
 public class InvalidProgramException : Exception {
     /// Creates new instance of InvalidProgramException
-    mixin basicExceptionCtors;
+    public this(string msg) nothrow pure @safe {
+        super(msg);
+    }
 }
 
 /**
