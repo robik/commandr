@@ -347,7 +347,7 @@ public class Command {
             throw new InvalidProgramException("name cannot be empty");
         }
 
-        if (!name.all!(c => isAlphaNum(c) || c == '_')()) {
+        if (!name.all!(c => isAlphaNum(c) || c == '_' || c == '-')()) {
             throw new InvalidProgramException("invalid name '%s' passed".format(name));
         }
 
