@@ -62,6 +62,7 @@ public class ProgramArgs {
         int[string] _flags;
         string[][string] _options;
         string[][string] _args;
+        string[] _args_rest;
         ProgramArgs _parent;
         ProgramArgs _command;
     }
@@ -222,6 +223,27 @@ public class ProgramArgs {
     /// ditto
     alias args = argAll;
 
+    /**
+     * Rest (unparsed) arguments.
+     *
+     * Useful, if you need to access unparsed arguments,
+     * usually supplied after '--'.
+     *
+     * Returns:
+     *   array of arguments that were not handled by parser
+     *
+     * Examples:
+     * ---
+     * auto args = ["my-command", "--opt", "arg", "--", "other-arg", "o-arg"];
+     * auto res = parse(args);
+     *
+     * // Not we can access unparsed args as res.argsRest
+     * assert(res.argsRest == ["other-arg", "o-arg"])
+     * ---
+     */
+    public string[] argsRest() {
+        return _args_rest;
+    }
 
     /**
      * Gets subcommand arguments.
