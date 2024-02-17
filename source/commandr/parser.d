@@ -189,6 +189,9 @@ private ProgramArgs parseArgs(
         }
     }
 
+    if (args.length > 0)
+        result._args_rest = args.dup;
+
     if (result.flag("help")) {
         program.printHelp(helpConfig);
         exit(0);
@@ -527,6 +530,7 @@ unittest {
                 .defaultValue("reee"))
             .parseArgs(args);
     assert(a.args("test") == ["reee"]);
+    assert(a.argsRest == ["bar"]);
     assert(args == ["bar"]);
 }
 
@@ -576,6 +580,7 @@ unittest {
     assert(a.args("test") == ["cccc"]);
     assert(a.command !is null);
     assert(a.command.name == "a");
+    assert(a.command.argsRest == ["c"]);
     assert(args == ["c"]);
 
     assertThrown!InvalidArgumentsException(

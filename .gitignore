@@ -13,3 +13,5 @@ commandr-test-*
 *.lst
 /commandr
 source/app.d
+libcommandr.a
+*.sw[npo]
