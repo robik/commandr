@@ -12,14 +12,13 @@
     Batteries included.
     <br />
     <br />
-    <a href="https://robik.github.io/commandr/"><strong>📗 Explore the docs »</strong></a>
+    <!-- <a href="https://robik.github.io/commandr/"><strong>📗 Explore the docs »</strong></a> -->
     <br />
     <a href="https://github.com/robik/commandr/issues">❗️ Report a bug</a>
     ·
     <a href="https://github.com/robik/commandr/issues">💡 Request feature</a>    
     <br />  
     <br />
-    <img src="https://img.shields.io/travis/robik/commandr?style=flat-square">
     <img src="https://img.shields.io/dub/v/commandr?style=flat-square">
     <img src="https://img.shields.io/github/issues/robik/commandr.svg?style=flat-square">
     <img src="https://img.shields.io/github/license/robik/commandr.svg?style=flat-square">
