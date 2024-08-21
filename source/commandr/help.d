@@ -2,7 +2,7 @@ module commandr.help;
 
 import commandr.program;
 import commandr.option;
-import std.algorithm : filter, map, any, chunkBy;
+import std.algorithm : filter, map, any, chunkBy, sort;
 import std.array : join, array;
 import std.conv : to;
 import std.stdio : writefln, writeln, write;
@@ -160,7 +160,19 @@ struct HelpPrinter {
     }
 
     private void printSubcommands(Command[string] commands) {
-        auto grouped = commands.values.chunkBy!(a => a.topic).array;
+        auto grouped = commands.values
+            .sort!((a, b) {
+                // Note, when we used chunkBy, it is expected that range
+                // is already sorted by the key, thus before grouping,
+                // we have to sort by topic first.
+                // And then by name for better output
+                // (because associative array do not preserver order).
+                if (a.topic == b.topic)
+                    return a.name < b.name;
+                return a.topic < b.topic;
+            })
+            .chunkBy!(a => a.topic)
+            .array;
 
         if (grouped.length == 1 && grouped[0][0] is null) {
             foreach(key, command; commands) {

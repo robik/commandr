@@ -252,6 +252,9 @@ public class Command {
             throw new InvalidProgramException("cannot have sub-commands and non-required argument");
         }
 
+        // TODO: may be update only if command do not have topic yet,
+        //       or only when _topicStart is set.
+        //       Because otherwise, topic set on command is overwritten here.
         command._topic = this._topicStart;
         command._parent = this;
         _commands[command.name] = command;
@@ -847,8 +850,13 @@ unittest {
             .topic("z")
             .topicGroup("general purpose")
             .add(new Command("b", "desc"))
+            .add(new Command("c", "desc"))
+            .topicGroup("other")
+            .add(new Command("d", "desc"))
             ;
 
     assert(p.topic == "z");
     assert(p.commands["b"].topic == "general purpose");
+    assert(p.commands["c"].topic == "general purpose");
+    assert(p.commands["d"].topic == "other");
 }
