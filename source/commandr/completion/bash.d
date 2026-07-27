@@ -126,10 +126,6 @@ private void completionFunc(Command command, Appender!string builder) {
 }
 
 private void completionFunc(Program program, Appender!string builder) {
-    foreach(command; program.commands) {
-        completionFunc(command, builder);
-    }
-
     completionFunc(cast(Command)program, builder);
 
     builder ~= "_%s_completion_main() {\n".format(program.binaryName);
