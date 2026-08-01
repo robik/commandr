@@ -272,7 +272,7 @@ public class FileSystemValidator: IValidator {
             case FileType.Directory:
                 if (!arg.isDir) {
                     throw new ValidationException(this,
-                        "value specified in %s %s must be a valid file".format(
+                        "value specified in %s %s must be a valid directory".format(
                             entry.getEntryKindName(), entry.name,
                         )
                     );
